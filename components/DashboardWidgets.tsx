@@ -1,6 +1,5 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import { useTaskStore } from '@/lib/store';
 import { 
   TrendingUp, 
@@ -21,19 +20,6 @@ import {
 } from 'lucide-react';
 import { format, isToday, isThisWeek, isThisMonth } from 'date-fns';
 
-const fadeInUp = {
-  initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.5 }
-};
-
-const staggerContainer = {
-  animate: {
-    transition: {
-      staggerChildren: 0.1
-    }
-  }
-};
 
 export default function DashboardWidgets() {
   const { tasks, userStats, setView } = useTaskStore();
@@ -219,9 +205,6 @@ export default function DashboardWidgets() {
               recentTasks.map((task, index) => (
                 <div
                   key={task.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1 }}
                   className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors"
                 >
                   <div className={`w-2 h-2 rounded-full ${

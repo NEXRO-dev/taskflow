@@ -1,6 +1,5 @@
 'use client';
 
-// import { motion, AnimatePresence } from 'framer-motion'; // Removed animations
 import { useState } from 'react';
 import { Task, useTaskStore } from '@/lib/store';
 import { 
@@ -61,15 +60,9 @@ export default function TaskCard({ task, index }: TaskCardProps) {
 
   return (
     <div
-      layout
-      initial={{ opacity: 0, y: 20 }}
-      animate={{ opacity: 1, y: 0 }}
-      exit={{ opacity: 0, x: -300 }}
-      transition={{ delay: index * 0.1 }}
       className={`glass rounded-xl p-4 border transition-all hover:shadow-lg group ${
         task.completed ? 'opacity-75' : ''
       }`}
-      whileHover={{ scale: 1.02, y: -2 }}
     >
       {/* Task Header */}
       <div className="flex items-start justify-between">
@@ -79,8 +72,6 @@ export default function TaskCard({ task, index }: TaskCardProps) {
             className={`mt-1 transition-colors ${
               task.completed ? 'text-green-600' : 'text-gray-400 hover:text-primary'
             }`}
-            whileHover={{ scale: 1.1 }}
-            whileTap={{ scale: 0.95 }}
           >
             {task.completed ? (
               <CheckCircle2 className="h-5 w-5 fill-current" />

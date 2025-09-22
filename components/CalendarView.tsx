@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-// import { motion } from 'framer-motion'; // Removed animations
+// import { motion } from 'framer-motion';
 import { DayPicker } from 'react-day-picker';
 import { useTaskStore } from '@/lib/store';
 import { format, isSameDay } from 'date-fns';
@@ -40,11 +40,7 @@ export default function CalendarView() {
 
   return (
     <div className="space-y-6">
-      <div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="glass rounded-2xl p-6"
-      >
+      <div className="glass rounded-2xl p-6">
         <div className="flex items-center space-x-3 mb-6">
           <Calendar className="h-6 w-6 text-primary" />
           <h2 className="text-xl font-semibold text-gray-900">タスクカレンダー</h2>
@@ -71,11 +67,7 @@ export default function CalendarView() {
             </h3>
 
             {selectedDate && selectedDateTasks.length === 0 && (
-              <div
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                className="text-center py-8"
-              >
+              <div className="text-center py-8">
                 <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                   <Calendar className="h-8 w-8 text-gray-400" />
                 </div>
@@ -92,9 +84,6 @@ export default function CalendarView() {
                 return (
                 <div
                   key={task.id}
-                  initial={{ opacity: 0, x: -20 }}
-                  animate={{ opacity: 1, x: 0 }}
-                  transition={{ delay: index * 0.1 }}
                   className={`p-4 rounded-lg border-l-4 ${
                     task.completed
                       ? 'bg-green-50 border-green-500'
@@ -160,12 +149,7 @@ export default function CalendarView() {
       </div>
 
       {/* Task Distribution Stats */}
-      <div
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.2 }}
-        className="grid grid-cols-1 md:grid-cols-4 gap-4"
-      >
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
         {[
           {
             label: '総タスク数',
@@ -194,9 +178,6 @@ export default function CalendarView() {
         ].map((stat, index) => (
           <div
             key={stat.label}
-            initial={{ opacity: 0, scale: 0.95 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.3 + index * 0.1 }}
             className="glass rounded-xl p-4"
           >
             <div className="flex items-center space-x-3">

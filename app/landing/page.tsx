@@ -254,10 +254,15 @@ export default function LandingPage() {
               transition={{ duration: 0.8 }}
             >
               <div className="space-y-4">
-                <div className="inline-flex items-center space-x-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium">
+                <motion.div
+                  className="inline-flex items-center space-x-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium"
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                >
                   <Sparkles className="h-4 w-4" />
                   <span>AI搭載タスク管理</span>
-                </div>
+                </motion.div>
                 
                 <h1 className="text-5xl lg:text-7xl font-bold text-gray-900 leading-tight">
                   生産性を
