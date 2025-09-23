@@ -3,7 +3,6 @@
 import { useState, useEffect, useRef } from 'react';
 // import { motion } from 'framer-motion'; // Removed animations
 import { useTaskStore } from '@/lib/store';
-import { useSearchParams } from 'next/navigation';
 import { 
   User, 
   Bell, 
@@ -34,7 +33,6 @@ import {
 
 export default function SettingsView() {
   const { isDarkMode, toggleDarkMode } = useTaskStore();
-  const searchParams = useSearchParams();
   const [activeTab, setActiveTab] = useState('profile');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -80,17 +78,20 @@ export default function SettingsView() {
     };
   }, []);
 
-  // URLパラメータに基づいてタブを設定
+  // URLパラメータに基づいてタブを設定（useSearchParamsを使わない方法）
   useEffect(() => {
-    const tab = searchParams.get('tab');
-    if (tab === 'profile') {
-      setActiveTab('profile');
-    } else if (tab === 'settings') {
-      setActiveTab('notifications');
-    } else if (tab === 'language') {
-      setActiveTab('language');
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const tab = urlParams.get('tab');
+      if (tab === 'profile') {
+        setActiveTab('profile');
+      } else if (tab === 'settings') {
+        setActiveTab('notifications');
+      } else if (tab === 'language') {
+        setActiveTab('language');
+      }
     }
-  }, [searchParams]);
+  }, []);
 
   // データベースからデータを読み込む
   useEffect(() => {
