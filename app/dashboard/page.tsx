@@ -1,7 +1,7 @@
 'use client';
 
 import { useTaskStore } from '@/lib/store';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
@@ -12,7 +12,7 @@ import CalendarView from '@/components/CalendarView';
 import AddTaskForm from '@/components/AddTaskForm';
 import SettingsView from '@/components/SettingsView';
 
-export default function DashboardPage() {
+function DashboardContent() {
   const { currentView, isDarkMode, setView, setCurrentUserId } = useTaskStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { isSignedIn, isLoaded, user } = useUser();
@@ -161,5 +161,20 @@ export default function DashboardPage() {
 
       <AddTaskForm />
     </div>
+  );
+}
+
+export default function DashboardPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-600">読み込み中...</p>
+        </div>
+      </div>
+    }>
+      <DashboardContent />
+    </Suspense>
   );
 }

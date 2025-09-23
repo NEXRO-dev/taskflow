@@ -5,12 +5,13 @@ import { initializeDatabase } from '@/lib/turso';
 // 個別の通知を既読にする
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await initializeDatabase();
     
-    const notificationId = parseInt(params.id);
+    const resolvedParams = await params;
+    const notificationId = parseInt(resolvedParams.id);
     
     if (isNaN(notificationId)) {
       return NextResponse.json(
