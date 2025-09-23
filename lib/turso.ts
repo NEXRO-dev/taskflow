@@ -104,7 +104,7 @@ export async function createNotification(userId: string, title: string, message?
       args: [userId, title, message || '', type]
     });
     
-    return result.lastInsertRowid;
+    return Number(result.lastInsertRowid);
   } catch (error) {
     console.error('Failed to create notification:', error);
     return null;

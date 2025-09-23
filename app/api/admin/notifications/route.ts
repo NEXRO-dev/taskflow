@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
     
     return NextResponse.json({
       success: true,
-      notificationId
+      notificationId: Number(notificationId)
     });
     
   } catch (error) {
