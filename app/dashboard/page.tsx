@@ -2,8 +2,7 @@
 
 import { motion } from 'framer-motion';
 import { useTaskStore } from '@/lib/store';
-import { useState, useEffect, Suspense } from 'react';
-import { useSearchParams } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
 import { useRouter } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
@@ -14,10 +13,9 @@ import CalendarView from '@/components/CalendarView';
 import AddTaskForm from '@/components/AddTaskForm';
 import SettingsView from '@/components/SettingsView';
 
-function DashboardContent() {
+export default function DashboardPage() {
   const { currentView, isDarkMode, setView, setCurrentUserId } = useTaskStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
-  const searchParams = useSearchParams();
   const { isSignedIn, isLoaded, user } = useUser();
   const router = useRouter();
 
@@ -30,17 +28,18 @@ function DashboardContent() {
     }
   }, [isLoaded, isSignedIn, user, router, setCurrentUserId]);
 
-  // URLパラメータに基づいてビューを設定
+  // URLパラメータに基づいてビューを設定（useSearchParamsを使わない方法）
   useEffect(() => {
-    if (isLoaded && isSignedIn) {
-      const tab = searchParams.get('tab');
+    if (isLoaded && isSignedIn && typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      const tab = urlParams.get('tab');
       if (tab === 'profile' || tab === 'settings' || tab === 'language') {
         setView('settings');
       } else {
         setView('dashboard');
       }
     }
-  }, [searchParams, setView, isLoaded, isSignedIn]);
+  }, [setView, isLoaded, isSignedIn]);
 
   // キーボードショートカット
   useEffect(() => {
@@ -144,20 +143,5 @@ function DashboardContent() {
 
       <AddTaskForm />
     </div>
-  );
-}
-
-export default function DashboardPage() {
-  return (
-    <Suspense fallback={
-      <div className="min-h-screen flex items-center justify-center">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-          <p className="text-gray-600">読み込み中...</p>
-        </div>
-      </div>
-    }>
-      <DashboardContent />
-    </Suspense>
   );
 }
