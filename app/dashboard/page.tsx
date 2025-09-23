@@ -3,6 +3,7 @@
 import { useTaskStore } from '@/lib/store';
 import { useState, useEffect, Suspense } from 'react';
 import { useUser } from '@clerk/nextjs';
+import { isClerkConfigured } from '@/lib/utils';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import ModernHeader from '@/components/ModernHeader';
@@ -20,6 +21,8 @@ function DashboardContent() {
   const searchParams = useSearchParams();
 
   useEffect(() => {
+    const enabled = isClerkConfigured();
+    if (!enabled) return; // Clerk未設定時は認証リダイレクトを無効化
     if (isLoaded && !isSignedIn) {
       router.push('/sign-in');
     } else if (isLoaded && isSignedIn && user) {
@@ -96,7 +99,7 @@ function DashboardContent() {
     );
   }
 
-  if (!isSignedIn) {
+  if (isClerkConfigured() && !isSignedIn) {
     return null;
   }
 
