@@ -2,7 +2,10 @@
 
 // import { motion } from 'framer-motion'; // Removed animations
 import { useTaskStore } from '@/lib/store';
+import { useUser } from '@clerk/nextjs';
 import Link from 'next/link';
+import Image from 'next/image';
+import { useRouter } from 'next/navigation';
 import { 
   LayoutDashboard,
   CheckSquare,
@@ -50,10 +53,12 @@ interface SidebarProps {
 
 export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
   const { currentView, setView, userStats, clearAllTasks, isDarkMode } = useTaskStore();
+  const { user } = useUser();
+  const router = useRouter();
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [profile, setProfile] = useState<Profile>({
-    name: '田中太郎',
-    email: 'tanaka@example.com',
+    name: '',
+    email: '',
     country_code: '+81',
     plan: 'Free'
   });
@@ -66,41 +71,30 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
     return userPlanIndex >= requiredPlanIndex;
   };
 
-  // プロフィール情報を取得
+  // Clerkのユーザー情報を設定
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const response = await fetch('/api/profile');
-        if (response.ok) {
-          const data = await response.json();
-          setProfile({
-            name: data.name || '田中太郎',
-            email: data.email || 'tanaka@example.com',
-            country_code: data.country_code || '+81',
-            plan: data.plan || 'Free'
-          });
-        }
-      } catch (error) {
-        console.error('Failed to fetch profile:', error);
-      }
-    };
-
-    fetchProfile();
-
-    // プロフィール更新イベントを監視
-    const handleProfileUpdate = () => {
-      fetchProfile();
-    };
-
-    window.addEventListener('profileUpdated', handleProfileUpdate);
-    return () => {
-      window.removeEventListener('profileUpdated', handleProfileUpdate);
-    };
-  }, []);
+    if (user) {
+      setProfile({
+        name: user.fullName || user.firstName || 'ユーザー',
+        email: user.primaryEmailAddress?.emailAddress || '',
+        country_code: '+81',
+        plan: 'Free'
+      });
+    }
+  }, [user]);
 
   const handleClearAllTasks = () => {
     if (window.confirm('本当に全てのタスクを削除しますか？この操作は元に戻せません。')) {
       clearAllTasks();
+    }
+  };
+
+  // ナビゲーションアイテムクリック時の処理
+  const handleNavClick = (view: 'dashboard' | 'list' | 'calendar' | 'projects' | 'analytics' | 'goals' | 'team' | 'kanban' | 'settings') => {
+    setView(view);
+    // 設定画面以外に移動する場合はURLをクリア
+    if (view !== 'settings') {
+      router.replace('/dashboard');
     }
   };
 
@@ -153,11 +147,27 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
         <div className="p-4 border-b border-gray-200"
         >
           <div className="flex items-center space-x-3">
-            <div className="w-10 h-10 bg-gray-600 rounded-full flex items-center justify-center">
-              <span className="text-white font-semibold text-sm">{profile.name.charAt(0)}</span>
-            </div>
-            <div className="flex-1">
-              <h3 className={`text-sm font-semibold ${isDarkMode ? 'text-white' : 'text-gray-900'}`}>{profile.name}</h3>
+            {user?.imageUrl ? (
+              <div className="w-10 h-10 rounded-full overflow-hidden border border-gray-200 flex-shrink-0">
+                <Image 
+                  src={user.imageUrl} 
+                  alt={profile.name || 'ユーザー'} 
+                  width={40}
+                  height={40}
+                  className="w-full h-full object-cover aspect-square"
+                />
+              </div>
+            ) : (
+              <div className="w-10 h-10 bg-gray-600 rounded-full flex items-center justify-center flex-shrink-0">
+                <span className="text-white font-semibold text-sm">
+                  {profile.name ? profile.name.charAt(0).toUpperCase() : 'U'}
+                </span>
+              </div>
+            )}
+            <div className="flex-1 min-w-0">
+              <h3 className={`text-sm font-semibold truncate ${isDarkMode ? 'text-white' : 'text-gray-900'}`} title={profile.name || 'ユーザー'}>
+                {profile.name || 'ユーザー'}
+              </h3>
               <div className={`text-xs ${isDarkMode ? 'text-gray-400' : 'text-gray-500'}`}>{profile.plan} Plan</div>
             </div>
           </div>
@@ -202,7 +212,7 @@ export default function Sidebar({ isOpen = true, onClose }: SidebarProps) {
               key={item.view}
               onClick={() => {
                 if (isAvailable) {
-                  setView(item.view as any);
+                  handleNavClick(item.view as 'dashboard' | 'list' | 'calendar' | 'projects' | 'analytics' | 'goals' | 'team' | 'kanban' | 'settings');
                 } else {
                   // アップグレードが必要な場合の処理
                   alert(`${item.label}機能は${item.plan}プラン以上でご利用いただけます。`);

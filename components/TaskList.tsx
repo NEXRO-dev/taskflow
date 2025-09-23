@@ -24,7 +24,10 @@ export default function TaskList() {
 
   const overdueTasks = pendingTasks.filter(task => {
     if (!task.dueDate) return false;
-    return new Date(task.dueDate) < new Date() && !task.completed;
+    const today = new Date();
+    const taskDate = new Date(task.dueDate);
+    // 今日より前の日付のみを期限切れとする（今日は含まない）
+    return taskDate.toDateString() < today.toDateString() && !task.completed;
   });
 
   if (tasks.length === 0) {

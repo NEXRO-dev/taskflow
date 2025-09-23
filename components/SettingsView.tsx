@@ -3,6 +3,9 @@
 import { useState, useEffect, useRef } from 'react';
 // import { motion } from 'framer-motion'; // Removed animations
 import { useTaskStore } from '@/lib/store';
+import { useUser } from '@clerk/nextjs';
+import { useSearchParams, useRouter } from 'next/navigation';
+import Image from 'next/image';
 import { 
   User, 
   Bell, 
@@ -33,6 +36,9 @@ import {
 
 export default function SettingsView() {
   const { isDarkMode, toggleDarkMode } = useTaskStore();
+  const { user } = useUser();
+  const searchParams = useSearchParams();
+  const router = useRouter();
   const [activeTab, setActiveTab] = useState('profile');
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -43,11 +49,11 @@ export default function SettingsView() {
     weeklyReport: false
   });
   const [profile, setProfile] = useState({
-    name: '田中太郎',
-    email: 'tanaka@example.com',
-    phone: '90-1234-5678',
+    name: '',
+    email: '',
+    phone: '',
     countryCode: '+81',
-    bio: 'プロジェクトマネージャーとして働いています。効率的なタスク管理を心がけています。'
+    bio: ''
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showCountryDropdown, setShowCountryDropdown] = useState(false);
@@ -78,10 +84,30 @@ export default function SettingsView() {
     };
   }, []);
 
-  // 初期タブ設定（URLパラメータは使用しない）
+  // URLパラメータに基づいてタブを設定
   useEffect(() => {
-    setActiveTab('profile');
-  }, []);
+    const tab = searchParams.get('tab');
+    if (tab && ['profile', 'subscription', 'notifications', 'appearance', 'language', 'security', 'data', 'settings'].includes(tab)) {
+      // 'settings'の場合は'notifications'タブをデフォルトとして表示
+      setActiveTab(tab === 'settings' ? 'notifications' : tab);
+    } else {
+      setActiveTab('profile');
+    }
+  }, [searchParams]);
+
+  // Clerkのユーザー情報を初期値として設定（データベースに保存された情報がない場合のみ）
+  useEffect(() => {
+    if (user && !profile.name) {
+      setProfile(prev => ({
+        ...prev,
+        name: user.fullName || user.firstName || 'ユーザー',
+        email: user.primaryEmailAddress?.emailAddress || prev.email,
+        phone: user.phoneNumbers?.[0]?.phoneNumber || prev.phone,
+        countryCode: prev.countryCode || '+81',
+        bio: prev.bio || 'プロジェクトマネージャーとして働いています。効率的なタスク管理を心がけています。'
+      }));
+    }
+  }, [user, profile.name]);
 
   // データベースからデータを読み込む
   useEffect(() => {
@@ -94,14 +120,14 @@ export default function SettingsView() {
         if (profileResponse.ok) {
           const profileData = await profileResponse.json();
           setProfile({
-            name: profileData.name || '田中太郎',
-            email: profileData.email || 'tanaka@example.com',
-            phone: profileData.phone || '90-1234-5678',
+            name: profileData.name || '',
+            email: profileData.email || '',
+            phone: profileData.phone || '',
             countryCode: profileData.country_code || '+81',
-            bio: profileData.bio || 'プロジェクトマネージャーとして働いています。効率的なタスク管理を心がけています。'
+            bio: profileData.bio || ''
           });
         }
-
+        
         // 設定情報を読み込み
         const settingsResponse = await fetch('/api/settings');
         if (settingsResponse.ok) {
@@ -278,6 +304,12 @@ export default function SettingsView() {
     }
   };
 
+  // タブクリック時のURL更新
+  const handleTabClick = (tabId: string) => {
+    setActiveTab(tabId);
+    router.push(`/dashboard?tab=${tabId}`);
+  };
+
   const handleSaveProfile = async () => {
     try {
       setSaving(true);
@@ -299,6 +331,15 @@ export default function SettingsView() {
       if (response.ok) {
         const updatedProfile = await response.json();
         console.log('Profile saved successfully:', updatedProfile);
+        
+        // 保存されたデータでプロフィール状態を更新
+        setProfile({
+          name: updatedProfile.name || '',
+          email: updatedProfile.email || '',
+          phone: updatedProfile.phone || '',
+          countryCode: updatedProfile.country_code || '+81',
+          bio: updatedProfile.bio || ''
+        });
         
         // プロフィール更新イベントを発生
         window.dispatchEvent(new CustomEvent('profileUpdated', {
@@ -338,17 +379,31 @@ export default function SettingsView() {
           <div className="space-y-6">
             <div className="flex items-center space-x-6">
               <div className="relative">
-                <div className="w-24 h-24 bg-gray-600 rounded-full flex items-center justify-center">
-                  <span className="text-white font-semibold text-2xl">田</span>
-                </div>
+                {user?.imageUrl ? (
+                  <div className="w-24 h-24 rounded-full overflow-hidden border-2 border-gray-200 flex-shrink-0">
+                    <Image 
+                      src={user.imageUrl} 
+                      alt={profile.name || 'ユーザー'} 
+                      width={96}
+                      height={96}
+                      className="w-full h-full object-cover aspect-square"
+                    />
+                  </div>
+                ) : (
+                  <div className="w-24 h-24 bg-gray-600 rounded-full flex items-center justify-center flex-shrink-0">
+                    <span className="text-white font-semibold text-2xl">
+                      {profile.name ? profile.name.charAt(0).toUpperCase() : 'U'}
+                    </span>
+                  </div>
+                )}
                 <button className="absolute bottom-0 right-0 w-8 h-8 bg-gray-900 rounded-full flex items-center justify-center text-white hover:bg-gray-800 transition-colors">
                   <Camera className="h-4 w-4" />
                 </button>
               </div>
               <div>
-                <h3 className="text-xl font-semibold text-gray-900">{profile.name}</h3>
-                <p className="text-gray-600">{profile.email}</p>
-                <span className="inline-block mt-2 px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">Pro Plan</span>
+                <h3 className="text-xl font-semibold text-gray-900">{profile.name || 'ユーザー'}</h3>
+                <p className="text-gray-600">{profile.email || 'メールアドレス未設定'}</p>
+                <span className="inline-block mt-2 px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full">Free Plan</span>
               </div>
             </div>
 
@@ -962,20 +1017,20 @@ export default function SettingsView() {
           {/* Settings Navigation */}
           <div className="lg:w-1/4 flex-shrink-0">
             <nav className="space-y-2 lg:sticky lg:top-0">
-              {tabs.map((tab) => (
-                <button
-                  key={tab.id}
-                  onClick={() => setActiveTab(tab.id)}
-                  className={`w-full flex items-center space-x-3 px-4 py-3 text-left rounded-lg transition-all ${
-                    activeTab === tab.id
-                      ? 'bg-gray-900 text-white'
-                      : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
-                  }`}
-                >
-                  <tab.icon className="h-5 w-5" />
-                  <span className="font-medium">{tab.label}</span>
-                </button>
-              ))}
+                  {tabs.map((tab) => (
+                    <button
+                      key={tab.id}
+                      onClick={() => handleTabClick(tab.id)}
+                      className={`w-full flex items-center space-x-3 px-4 py-3 text-left rounded-lg transition-all ${
+                        activeTab === tab.id
+                          ? 'bg-gray-900 text-white'
+                          : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+                      }`}
+                    >
+                      <tab.icon className="h-5 w-5" />
+                      <span className="font-medium">{tab.label}</span>
+                    </button>
+                  ))}
             </nav>
           </div>
 

@@ -39,7 +39,14 @@ export default function DashboardWidgets() {
   const completedTasks = tasks.filter(t => t.completed).length;
   const pendingTasks = totalTasks - completedTasks;
   const todayTasks = tasks.filter(t => t.dueDate && isToday(new Date(t.dueDate))).length;
-  const overdueTasks = tasks.filter(t => !t.completed && t.dueDate && new Date(t.dueDate) < new Date()).length;
+  const overdueTasks = tasks.filter(t => {
+    if (!t.completed && t.dueDate) {
+      const today = new Date();
+      const taskDate = new Date(t.dueDate);
+      return taskDate.toDateString() < today.toDateString();
+    }
+    return false;
+  }).length;
   const weeklyTasks = tasks.filter(t => t.dueDate && isThisWeek(new Date(t.dueDate))).length;
   const monthlyCompleted = tasks.filter(t => t.completed && t.createdAt && isThisMonth(new Date(t.createdAt))).length;
 

@@ -37,6 +37,20 @@ export async function initializeDatabase() {
       )
     `);
 
+    // 通知テーブルを作成
+    await turso.execute(`
+      CREATE TABLE IF NOT EXISTS notifications (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id TEXT NOT NULL,
+        title TEXT NOT NULL,
+        message TEXT,
+        type TEXT DEFAULT 'info',
+        is_read BOOLEAN DEFAULT FALSE,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (user_id) REFERENCES user_profiles(id)
+      )
+    `);
+
     // デフォルトのユーザーデータを挿入（存在しない場合のみ）
     await turso.execute(`
       INSERT OR IGNORE INTO user_profiles (id) VALUES ('default_user')
@@ -49,6 +63,105 @@ export async function initializeDatabase() {
     console.log('Database initialized successfully');
   } catch (error) {
     console.error('Database initialization failed:', error);
+  }
+}
+
+// 通知関連の関数
+export async function getNotifications(userId: string) {
+  try {
+    const result = await turso.execute({
+      sql: `
+        SELECT id, title, message, type, is_read, created_at
+        FROM notifications 
+        WHERE user_id = ? 
+        ORDER BY created_at DESC 
+        LIMIT 50
+      `,
+      args: [userId]
+    });
+    
+    return result.rows.map(row => ({
+      id: row.id as number,
+      title: row.title as string,
+      message: row.message as string,
+      type: row.type as string,
+      is_read: Boolean(row.is_read),
+      created_at: row.created_at as string
+    }));
+  } catch (error) {
+    console.error('Failed to get notifications:', error);
+    return [];
+  }
+}
+
+export async function createNotification(userId: string, title: string, message?: string, type: string = 'info') {
+  try {
+    const result = await turso.execute({
+      sql: `
+        INSERT INTO notifications (user_id, title, message, type)
+        VALUES (?, ?, ?, ?)
+      `,
+      args: [userId, title, message || '', type]
+    });
+    
+    return result.lastInsertRowid;
+  } catch (error) {
+    console.error('Failed to create notification:', error);
+    return null;
+  }
+}
+
+export async function markNotificationAsRead(notificationId: number) {
+  try {
+    await turso.execute({
+      sql: `
+        UPDATE notifications 
+        SET is_read = TRUE 
+        WHERE id = ?
+      `,
+      args: [notificationId]
+    });
+    
+    return true;
+  } catch (error) {
+    console.error('Failed to mark notification as read:', error);
+    return false;
+  }
+}
+
+export async function markAllNotificationsAsRead(userId: string) {
+  try {
+    await turso.execute({
+      sql: `
+        UPDATE notifications 
+        SET is_read = TRUE 
+        WHERE user_id = ? AND is_read = FALSE
+      `,
+      args: [userId]
+    });
+    
+    return true;
+  } catch (error) {
+    console.error('Failed to mark all notifications as read:', error);
+    return false;
+  }
+}
+
+export async function getUnreadNotificationCount(userId: string) {
+  try {
+    const result = await turso.execute({
+      sql: `
+        SELECT COUNT(*) as count
+        FROM notifications 
+        WHERE user_id = ? AND is_read = FALSE
+      `,
+      args: [userId]
+    });
+    
+    return result.rows[0]?.count as number || 0;
+  } catch (error) {
+    console.error('Failed to get unread notification count:', error);
+    return 0;
   }
 }
 

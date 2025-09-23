@@ -9,7 +9,8 @@ import { Calendar, CheckCircle, Clock, AlertTriangle } from 'lucide-react';
 import 'react-day-picker/dist/style.css';
 
 export default function CalendarView() {
-  const { tasks } = useTaskStore();
+  const { getUserTasks } = useTaskStore();
+  const tasks = getUserTasks();
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
 
   const tasksWithDates = tasks.filter(task => task.dueDate);
@@ -78,8 +79,10 @@ export default function CalendarView() {
             {/* スクロール可能なタスクリスト - カレンダーの高さに合わせる */}
             <div className="flex-1 max-h-[280px] overflow-y-auto space-y-3 pr-2">
               {selectedDateTasks.map((task, index) => {
-                const isOverdue = new Date(task.dueDate!) < new Date() && !task.completed;
-                const isToday = isSameDay(new Date(task.dueDate!), new Date());
+                const today = new Date();
+                const taskDate = new Date(task.dueDate!);
+                const isOverdue = taskDate.toDateString() < today.toDateString() && !task.completed;
+                const isToday = isSameDay(taskDate, today);
                 
                 return (
                 <div
@@ -171,7 +174,14 @@ export default function CalendarView() {
           },
           {
             label: '期限切れ',
-            value: tasksWithDates.filter(t => !t.completed && new Date(t.dueDate!) < new Date()).length,
+            value: tasksWithDates.filter(t => {
+              if (!t.completed && t.dueDate) {
+                const today = new Date();
+                const taskDate = new Date(t.dueDate);
+                return taskDate.toDateString() < today.toDateString();
+              }
+              return false;
+            }).length,
             icon: AlertTriangle,
             color: 'red'
           }

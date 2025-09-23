@@ -3,7 +3,7 @@
 import { useTaskStore } from '@/lib/store';
 import { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import ModernHeader from '@/components/ModernHeader';
 import DashboardWidgets from '@/components/DashboardWidgets';
@@ -17,8 +17,8 @@ export default function DashboardPage() {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { isSignedIn, isLoaded, user } = useUser();
   const router = useRouter();
+  const searchParams = useSearchParams();
 
-  // 認証チェックとユーザーID設定
   useEffect(() => {
     if (isLoaded && !isSignedIn) {
       router.push('/sign-in');
@@ -27,28 +27,64 @@ export default function DashboardPage() {
     }
   }, [isLoaded, isSignedIn, user, router, setCurrentUserId]);
 
-  // キーボードショートカット
+  // URLパラメータに基づいてビューを設定
   useEffect(() => {
-    if (!isLoaded || !isSignedIn) return;
-    
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
-        e.preventDefault();
-        if (typeof window !== 'undefined' && (window as any).openTaskForm) {
-          (window as any).openTaskForm();
+    if (isLoaded && isSignedIn) {
+      const tab = searchParams.get('tab');
+      if (tab) {
+        // URLパラメータのtabに基づいてビューを設定
+        switch (tab) {
+          case 'profile':
+          case 'subscription':
+          case 'notifications':
+          case 'appearance':
+          case 'language':
+          case 'security':
+          case 'data':
+          case 'settings':
+            setView('settings');
+            break;
+          case 'dashboard':
+            setView('dashboard');
+            break;
+          case 'list':
+            setView('list');
+            break;
+          case 'calendar':
+            setView('calendar');
+            break;
+          case 'projects':
+            setView('projects');
+            break;
+          case 'analytics':
+            setView('analytics');
+            break;
+          case 'goals':
+            setView('goals');
+            break;
+          case 'team':
+            setView('team');
+            break;
+          default:
+            setView('dashboard');
         }
+      } else {
+        setView('dashboard'); // デフォルトビューを設定
       }
+    }
+  }, [setView, isLoaded, isSignedIn, searchParams]);
 
-      if (e.key === 'Escape') {
-        setSidebarOpen(false);
+  // ビュー変更時にURLをクリアする機能
+  useEffect(() => {
+    if (isLoaded && isSignedIn) {
+      const tab = searchParams.get('tab');
+      // 設定関連のタブでない場合、URLパラメータをクリア
+      if (currentView !== 'settings' && tab && ['profile', 'subscription', 'notifications', 'appearance', 'language', 'security', 'data', 'settings'].includes(tab)) {
+        router.replace('/dashboard');
       }
-    };
+    }
+  }, [currentView, isLoaded, isSignedIn, searchParams, router]);
 
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isLoaded, isSignedIn]);
-
-  // ローディング状態
   if (!isLoaded) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -60,7 +96,6 @@ export default function DashboardPage() {
     );
   }
 
-  // 未認証の場合は何も表示しない（リダイレクト中）
   if (!isSignedIn) {
     return null;
   }
