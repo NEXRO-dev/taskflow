@@ -78,19 +78,9 @@ export default function SettingsView() {
     };
   }, []);
 
-  // URLパラメータに基づいてタブを設定（useSearchParamsを使わない方法）
+  // 初期タブ設定（URLパラメータは使用しない）
   useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search);
-      const tab = urlParams.get('tab');
-      if (tab === 'profile') {
-        setActiveTab('profile');
-      } else if (tab === 'settings') {
-        setActiveTab('notifications');
-      } else if (tab === 'language') {
-        setActiveTab('language');
-      }
-    }
+    setActiveTab('profile');
   }, []);
 
   // データベースからデータを読み込む

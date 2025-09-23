@@ -1,6 +1,5 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import { useTaskStore } from '@/lib/store';
 import { useState, useEffect } from 'react';
 import { useUser } from '@clerk/nextjs';
@@ -28,25 +27,11 @@ export default function DashboardPage() {
     }
   }, [isLoaded, isSignedIn, user, router, setCurrentUserId]);
 
-  // URLパラメータに基づいてビューを設定（useSearchParamsを使わない方法）
-  useEffect(() => {
-    if (isLoaded && isSignedIn && typeof window !== 'undefined') {
-      const urlParams = new URLSearchParams(window.location.search);
-      const tab = urlParams.get('tab');
-      if (tab === 'profile' || tab === 'settings' || tab === 'language') {
-        setView('settings');
-      } else {
-        setView('dashboard');
-      }
-    }
-  }, [setView, isLoaded, isSignedIn]);
-
   // キーボードショートカット
   useEffect(() => {
     if (!isLoaded || !isSignedIn) return;
     
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Ctrl/Cmd + N でタスク追加（詳細フォーム）
       if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
         e.preventDefault();
         if (typeof window !== 'undefined' && (window as any).openTaskForm) {
@@ -54,7 +39,6 @@ export default function DashboardPage() {
         }
       }
 
-      // Escapeでメニューを閉じる
       if (e.key === 'Escape') {
         setSidebarOpen(false);
       }
@@ -82,14 +66,13 @@ export default function DashboardPage() {
   }
 
   const renderCurrentView = () => {
-    console.log('Current view:', currentView);
     switch (currentView) {
       case 'dashboard':
         return <DashboardWidgets />;
       case 'list':
         return <TaskList />;
       case 'kanban':
-        return <TaskList />; // Simplified for MVP
+        return <TaskList />;
       case 'calendar':
         return <CalendarView />;
       case 'projects':
