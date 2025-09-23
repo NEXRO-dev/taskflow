@@ -4,6 +4,8 @@ import { motion } from 'framer-motion';
 import { useTaskStore } from '@/lib/store';
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
+import { useUser } from '@clerk/nextjs';
+import { useRouter } from 'next/navigation';
 import Sidebar from '@/components/Sidebar';
 import ModernHeader from '@/components/ModernHeader';
 import DashboardWidgets from '@/components/DashboardWidgets';
@@ -13,22 +15,37 @@ import AddTaskForm from '@/components/AddTaskForm';
 import SettingsView from '@/components/SettingsView';
 
 export default function DashboardPage() {
-  const { currentView, isDarkMode, setView } = useTaskStore();
+  const { currentView, isDarkMode, setView, setCurrentUserId } = useTaskStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const searchParams = useSearchParams();
+  const { isSignedIn, isLoaded, user } = useUser();
+  const router = useRouter();
+
+  // 認証チェックとユーザーID設定
+  useEffect(() => {
+    if (isLoaded && !isSignedIn) {
+      router.push('/sign-in');
+    } else if (isLoaded && isSignedIn && user) {
+      setCurrentUserId(user.id);
+    }
+  }, [isLoaded, isSignedIn, user, router, setCurrentUserId]);
 
   // URLパラメータに基づいてビューを設定
   useEffect(() => {
-    const tab = searchParams.get('tab');
-    if (tab === 'profile' || tab === 'settings' || tab === 'language') {
-      setView('settings');
-    } else {
-      setView('dashboard');
+    if (isLoaded && isSignedIn) {
+      const tab = searchParams.get('tab');
+      if (tab === 'profile' || tab === 'settings' || tab === 'language') {
+        setView('settings');
+      } else {
+        setView('dashboard');
+      }
     }
-  }, [searchParams, setView]);
+  }, [searchParams, setView, isLoaded, isSignedIn]);
 
   // キーボードショートカット
   useEffect(() => {
+    if (!isLoaded || !isSignedIn) return;
+    
     const handleKeyDown = (e: KeyboardEvent) => {
       // Ctrl/Cmd + N でタスク追加（詳細フォーム）
       if ((e.ctrlKey || e.metaKey) && e.key === 'n') {
@@ -46,7 +63,24 @@ export default function DashboardPage() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+  }, [isLoaded, isSignedIn]);
+
+  // ローディング状態
+  if (!isLoaded) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-600">読み込み中...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // 未認証の場合は何も表示しない（リダイレクト中）
+  if (!isSignedIn) {
+    return null;
+  }
 
   const renderCurrentView = () => {
     console.log('Current view:', currentView);

@@ -4,6 +4,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useUser, useClerk } from '@clerk/nextjs';
 import { 
   Search, 
   Bell, 
@@ -24,6 +25,8 @@ interface ModernHeaderProps {
 
 export default function ModernHeader({ onMenuToggle }: ModernHeaderProps) {
   const router = useRouter();
+  const { user, isSignedIn } = useUser();
+  const { signOut } = useClerk();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [profile, setProfile] = useState({
@@ -43,35 +46,15 @@ export default function ModernHeader({ onMenuToggle }: ModernHeaderProps) {
 
   // プロフィール情報を取得
   useEffect(() => {
-    const fetchProfile = async () => {
-      try {
-        const response = await fetch('/api/profile');
-        if (response.ok) {
-          const data = await response.json();
-          setProfile({
-            name: data.name || '田中太郎',
-            email: data.email || 'tanaka@example.com',
-            country_code: data.country_code || '+81',
-            plan: data.plan || 'Free'
-          });
-        }
-      } catch (error) {
-        console.error('Failed to fetch profile:', error);
-      }
-    };
-
-    fetchProfile();
-
-    // プロフィール更新イベントを監視
-    const handleProfileUpdate = () => {
-      fetchProfile();
-    };
-
-    window.addEventListener('profileUpdated', handleProfileUpdate);
-    return () => {
-      window.removeEventListener('profileUpdated', handleProfileUpdate);
-    };
-  }, []);
+    if (user) {
+      setProfile({
+        name: user.fullName || user.firstName || 'ユーザー',
+        email: user.primaryEmailAddress?.emailAddress || '',
+        country_code: '+81',
+        plan: 'Free'
+      });
+    }
+  }, [user]);
 
   // 名前の最初の文字を取得（アバター用）
   const getInitial = (name: string) => {
@@ -79,11 +62,14 @@ export default function ModernHeader({ onMenuToggle }: ModernHeaderProps) {
   };
 
   // ログアウト機能
-  const handleLogout = () => {
-    // プロフィールメニューを閉じる
-    setShowProfileMenu(false);
-    // ランディングページにリダイレクト
-    router.push('/');
+  const handleLogout = async () => {
+    try {
+      await signOut();
+      setShowProfileMenu(false);
+      router.push('/');
+    } catch (error) {
+      console.error('ログアウトエラー:', error);
+    }
   };
 
   // プロフィール機能

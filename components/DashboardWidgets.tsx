@@ -22,7 +22,8 @@ import { format, isToday, isThisWeek, isThisMonth } from 'date-fns';
 
 
 export default function DashboardWidgets() {
-  const { tasks, userStats, setView } = useTaskStore();
+  const { getUserTasks, userStats, setView } = useTaskStore();
+  const tasks = getUserTasks();
 
   console.log('DashboardWidgets rendered, total tasks:', tasks.length, tasks);
   

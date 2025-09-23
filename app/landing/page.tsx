@@ -205,10 +205,10 @@ export default function LandingPage() {
               <a href="#pricing" className="text-gray-600 hover:text-gray-900 transition-colors">料金</a>
               <a href="#testimonials" className="text-gray-600 hover:text-gray-900 transition-colors">レビュー</a>
               <Link 
-                href="/dashboard"
+                href="/sign-in"
                 className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary/90 transition-colors"
               >
-                ダッシュボード
+                ログイン
               </Link>
             </div>
 

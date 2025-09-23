@@ -5,7 +5,8 @@ import TaskCard from './TaskCard';
 import { CheckCircle, Clock, AlertCircle } from 'lucide-react';
 
 export default function TaskList() {
-  const { tasks } = useTaskStore();
+  const { getUserTasks } = useTaskStore();
+  const tasks = getUserTasks();
 
   console.log('TaskList rendered, total tasks:', tasks.length, tasks);
 

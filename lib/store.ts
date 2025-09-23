@@ -14,6 +14,7 @@ export interface Task {
   project?: string;
   xpValue: number;
   reminder?: number; // リマインダー (分前)
+  userId: string; // ユーザーIDを追加
 }
 
 export interface Subtask {
@@ -35,7 +36,8 @@ interface TaskStore {
   userStats: UserStats;
   currentView: 'dashboard' | 'list' | 'kanban' | 'calendar' | 'projects' | 'analytics' | 'goals' | 'team' | 'settings';
   isDarkMode: boolean;
-  addTask: (task: Omit<Task, 'id' | 'createdAt' | 'xpValue'>) => void;
+  currentUserId: string | null;
+  addTask: (task: Omit<Task, 'id' | 'createdAt' | 'xpValue' | 'userId'>) => void;
   updateTask: (id: string, updates: Partial<Task>) => void;
   deleteTask: (id: string) => void;
   toggleTask: (id: string) => void;
@@ -46,6 +48,8 @@ interface TaskStore {
   generateSubtasks: (taskTitle: string) => string[];
   clearAllTasks: () => void;
   toggleDarkMode: () => void;
+  setCurrentUserId: (userId: string | null) => void;
+  getUserTasks: () => Task[];
 }
 
 export const useTaskStore = create<TaskStore>()(
@@ -61,14 +65,22 @@ export const useTaskStore = create<TaskStore>()(
       },
       currentView: 'dashboard',
       isDarkMode: false,
+      currentUserId: null,
 
       addTask: (taskData) => {
+        const { currentUserId } = get();
+        if (!currentUserId) {
+          console.error('ユーザーIDが設定されていません');
+          return;
+        }
+        
         console.log('Store addTask called with:', taskData);
         const newTask: Task = {
           ...taskData,
           id: crypto.randomUUID(),
           createdAt: new Date(),
           xpValue: taskData.priority === 'high' ? 30 : taskData.priority === 'medium' ? 20 : 10,
+          userId: currentUserId,
         };
         console.log('Created new task:', newTask);
         set((state) => {
@@ -218,6 +230,15 @@ export const useTaskStore = create<TaskStore>()(
         set((state) => ({
           isDarkMode: !state.isDarkMode
         }));
+      },
+
+      setCurrentUserId: (userId) => {
+        set({ currentUserId: userId });
+      },
+
+      getUserTasks: () => {
+        const { tasks, currentUserId } = get();
+        return currentUserId ? tasks.filter(task => task.userId === currentUserId) : [];
       }
     }),
     {
