@@ -7,7 +7,7 @@ import { isClerkConfigured } from '@/lib/utils';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
-  title: 'TaskFlow Pro - AI-Powered Task Management Platform',
+  title: 'FlowCraft Pro - AI-Powered Task Management Platform',
   description: 'The world\'s most intelligent task manager. Powered by AI, gamified for motivation, and designed for teams that want to achieve more.',
 };
 

@@ -87,7 +87,7 @@ export default function LandingPage() {
       name: '田中 美智子',
       role: 'テックコープ　プロダクトマネージャー',
       avatar: 'https://images.pexels.com/photos/774909/pexels-photo-774909.jpeg?auto=compress&cs=tinysrgb&w=150&h=150&fit=crop',
-      content: 'TaskFlow Proでチームのプロジェクト管理が劇的に変わりました。AIのサブタスク生成機能で毎週数時間の節約になっています。',
+      content: 'FlowCraft Proでチームのプロジェクト管理が劇的に変わりました。AIのサブタスク生成機能で毎週数時間の節約になっています。',
       rating: 5
     },
     {
@@ -194,7 +194,7 @@ export default function LandingPage() {
                 />
               </div>
               <div>
-                <h1 className="text-xl font-bold text-gray-900">TaskFlow Pro</h1>
+                <h1 className="text-xl font-bold text-gray-900">FlowCraft Pro</h1>
                 <p className="text-xs text-gray-600">次世代生産性プラットフォーム</p>
               </div>
             </Link>
@@ -451,7 +451,7 @@ export default function LandingPage() {
               もの方に愛用されています
             </h2>
             <p className="text-xl text-gray-600">
-              TaskFlow Proについてユーザーの皆様の声をお聞きください
+              FlowCraft Proについてユーザーの皆様の声をお聞きください
             </p>
           </motion.div>
 
@@ -579,7 +579,7 @@ export default function LandingPage() {
               生産性を変革する準備はできていますか？
             </h2>
             <p className="text-xl text-blue-100">
-              TaskFlow Proでワークフローを革新した何千ものプロフェッショナルに仲間入りしましょう。
+              FlowCraft Proでワークフローを革新した何千ものプロフェッショナルに仲間入りしましょう。
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Link
@@ -608,7 +608,7 @@ export default function LandingPage() {
               <div className="flex items-center space-x-3">
                 <Zap className="h-8 w-8 text-primary fill-current" />
                 <div>
-                  <h3 className="text-xl font-bold">TaskFlow Pro</h3>
+                  <h3 className="text-xl font-bold">FlowCraft Pro</h3>
                   <p className="text-sm text-gray-400">次世代生産性プラットフォーム</p>
                 </div>
               </div>
@@ -649,7 +649,7 @@ export default function LandingPage() {
           </div>
 
           <div className="border-t border-gray-800 mt-12 pt-8 flex flex-col md:flex-row justify-between items-center">
-            <p className="text-gray-400">© 2025 TaskFlow Pro. All rights reserved.</p>
+            <p className="text-gray-400">© 2025 FlowCraft Pro. All rights reserved.</p>
             <div className="flex items-center space-x-6 mt-4 md:mt-0">
               <a href="#" className="text-gray-400 hover:text-white transition-colors">利用規約</a>
               <a href="#" className="text-gray-400 hover:text-white transition-colors">プライバシー</a>

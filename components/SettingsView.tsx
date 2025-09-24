@@ -35,7 +35,7 @@ import {
 // Animations removed for better performance
 
 function SettingsContent() {
-  const { isDarkMode, toggleDarkMode } = useTaskStore();
+  const { isDarkMode, toggleDarkMode, getUserTasks } = useTaskStore();
   const { user } = useUser();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -62,9 +62,9 @@ function SettingsContent() {
     status: 'active',
     nextBillingDate: '2024-02-01',
     usage: {
-      tasks: 150,
+      tasks: 0,
       taskLimit: 100,
-      storage: 2.5,
+      storage: 0,
       storageLimit: 5
     }
   });
@@ -94,6 +94,26 @@ function SettingsContent() {
       setActiveTab('profile');
     }
   }, [searchParams]);
+
+  // 実際のタスクデータから使用状況を計算
+  useEffect(() => {
+    const userTasks = getUserTasks();
+    const totalTasks = userTasks.length;
+    const completedTasks = userTasks.filter(task => task.completed).length;
+    
+    // ストレージ使用量の概算（タスク数に基づく）
+    const estimatedStorage = Math.round((totalTasks * 0.01) * 100) / 100; // 1タスクあたり約0.01GB
+    
+    setSubscription(prev => ({
+      ...prev,
+      usage: {
+        tasks: totalTasks,
+        taskLimit: prev.plan === 'Free' ? 100 : -1, // Freeプランは100タスク、それ以外は無制限
+        storage: estimatedStorage,
+        storageLimit: prev.plan === 'Free' ? 5 : -1 // Freeプランは5GB、それ以外は無制限
+      }
+    }));
+  }, [getUserTasks]);
 
   // Clerkのユーザー情報を初期値として設定（データベースに保存された情報がない場合のみ）
   useEffect(() => {

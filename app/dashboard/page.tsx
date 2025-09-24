@@ -16,6 +16,7 @@ import SettingsView from '@/components/SettingsView';
 function DashboardContent() {
   const { currentView, isDarkMode, setView, setCurrentUserId } = useTaskStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const { isSignedIn, isLoaded, user } = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -150,9 +151,13 @@ function DashboardContent() {
 
   return (
     <div className={`min-h-screen transition-colors duration-300 ${isDarkMode ? 'dark bg-gray-900' : 'bg-gray-50'}`}>
-      <Sidebar isOpen={true} onClose={() => setSidebarOpen(false)} />
+      <Sidebar 
+        isOpen={true} 
+        onClose={() => setSidebarOpen(false)}
+        onCollapseChange={setIsSidebarCollapsed}
+      />
       
-      <div className="lg:ml-72">
+      <div className={`transition-all duration-300 ${isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-72'}`}>
         <ModernHeader onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
         
         <main className="p-6">

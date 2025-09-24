@@ -4,8 +4,8 @@
 const testNotifications = [
   {
     userId: 'default_user',
-    title: 'TaskFlowへようこそ！',
-    message: 'TaskFlowをご利用いただき、ありがとうございます。効率的なタスク管理を始めましょう。',
+    title: 'FlowCraftへようこそ！',
+    message: 'FlowCraftをご利用いただき、ありがとうございます。効率的なタスク管理を始めましょう。',
     type: 'info'
   },
   {

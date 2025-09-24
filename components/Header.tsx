@@ -33,7 +33,7 @@ export default function Header() {
               <div className="absolute -top-1 -right-1 w-3 h-3 bg-accent rounded-full" />
             </div>
             <div>
-              <h1 className="text-xl font-bold text-gray-900">TaskFlow Pro</h1>
+              <h1 className="text-xl font-bold text-gray-900">FlowCraft Pro</h1>
               <p className="text-xs text-gray-600">次世代生産性プラットフォーム</p>
             </div>
           </Link>
