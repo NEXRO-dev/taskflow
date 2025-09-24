@@ -125,8 +125,8 @@ export default function TaskList() {
                       今日の予定
                     </h3>
                     <div className="space-y-3">
-                      {todayEvents.map((event) => (
-                        <TaskCard key={event.id} task={event} />
+                      {todayEvents.map((event, index) => (
+                        <TaskCard key={event.id} task={event} index={index} />
                       ))}
                     </div>
                   </div>
@@ -140,8 +140,8 @@ export default function TaskList() {
                       今後の予定
                     </h3>
                     <div className="space-y-3">
-                      {upcomingEvents.filter(event => !todayEvents.includes(event)).map((event) => (
-                        <TaskCard key={event.id} task={event} />
+                      {upcomingEvents.filter(event => !todayEvents.includes(event)).map((event, index) => (
+                        <TaskCard key={event.id} task={event} index={index} />
                       ))}
                     </div>
                   </div>
@@ -180,8 +180,8 @@ export default function TaskList() {
                       期限切れ ({overdueTasks.length})
                     </h3>
                     <div className="space-y-3">
-                      {overdueTasks.map((task) => (
-                        <TaskCard key={task.id} task={task} />
+                      {overdueTasks.map((task, index) => (
+                        <TaskCard key={task.id} task={task} index={index} />
                       ))}
                     </div>
                   </div>
@@ -195,8 +195,8 @@ export default function TaskList() {
                       今日期限 ({todayTasks.length})
                     </h3>
                     <div className="space-y-3">
-                      {todayTasks.map((task) => (
-                        <TaskCard key={task.id} task={task} />
+                      {todayTasks.map((task, index) => (
+                        <TaskCard key={task.id} task={task} index={index} />
                       ))}
                     </div>
                   </div>
@@ -210,8 +210,8 @@ export default function TaskList() {
                       未完了
                     </h3>
                     <div className="space-y-3">
-                      {pendingTasks.filter(task => !overdueTasks.includes(task) && !todayTasks.includes(task)).map((task) => (
-                        <TaskCard key={task.id} task={task} />
+                      {pendingTasks.filter(task => !overdueTasks.includes(task) && !todayTasks.includes(task)).map((task, index) => (
+                        <TaskCard key={task.id} task={task} index={index} />
                       ))}
                     </div>
                   </div>
@@ -225,8 +225,8 @@ export default function TaskList() {
                       完了済み ({completedTasks.length})
                     </h3>
                     <div className="space-y-3">
-                      {completedTasks.map((task) => (
-                        <TaskCard key={task.id} task={task} />
+                      {completedTasks.map((task, index) => (
+                        <TaskCard key={task.id} task={task} index={index} />
                       ))}
                     </div>
                   </div>
