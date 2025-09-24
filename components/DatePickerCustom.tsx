@@ -98,7 +98,7 @@ export default function DatePickerCustom({ value, onChange, label, placeholder, 
   };
 
   const isSelected = (date: Date): boolean => {
-    return value && date.toDateString() === selectedDate.toDateString();
+    return !!value && !!selectedDate && date.toDateString() === selectedDate.toDateString();
   };
 
   const isDisabled = (date: Date): boolean => {
