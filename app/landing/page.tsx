@@ -193,8 +193,8 @@ export default function LandingPage() {
                 href="/sign-in"
                 className="text-white px-6 py-2 rounded-lg transition-colors"
                 style={{ backgroundColor: '#3b82f6' }}
-                onMouseEnter={(e) => e.target.style.backgroundColor = '#2563eb'}
-                onMouseLeave={(e) => e.target.style.backgroundColor = '#3b82f6'}
+                onMouseEnter={(e) => (e.target as HTMLElement).style.backgroundColor = '#2563eb'}
+                onMouseLeave={(e) => (e.target as HTMLElement).style.backgroundColor = '#3b82f6'}
               >
                 ログイン
               </Link>
@@ -263,8 +263,8 @@ export default function LandingPage() {
                   href="/dashboard"
                   className="text-white px-8 py-4 rounded-xl font-semibold transition-all hover:scale-105 flex items-center justify-center space-x-2"
                   style={{ backgroundColor: '#3b82f6' }}
-                  onMouseEnter={(e) => e.target.style.backgroundColor = '#2563eb'}
-                  onMouseLeave={(e) => e.target.style.backgroundColor = '#3b82f6'}
+                  onMouseEnter={(e) => (e.target as HTMLElement).style.backgroundColor = '#2563eb'}
+                  onMouseLeave={(e) => (e.target as HTMLElement).style.backgroundColor = '#3b82f6'}
                 >
                   <span>今すぐ無料で始める</span>
                   <ArrowRight className="h-5 w-5" />
