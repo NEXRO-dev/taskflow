@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getProfile, updateProfile, initializeDatabase } from '@/lib/turso';
-import { auth } from '@clerk/nextjs/server';
+import { auth, currentUser } from '@clerk/nextjs/server';
+import { validateAndSanitizeProfile } from '@/lib/validation';
 
 // プロフィール情報を取得
 export async function GET() {
@@ -9,12 +10,13 @@ export async function GET() {
     await initializeDatabase();
     
     // ClerkからユーザーIDを取得
-    const { userId } = await auth();
+    const user = await currentUser();
     
-    if (!userId) {
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
+    const userId = user.id;
     const profile = await getProfile(userId);
     
     if (!profile) {
@@ -35,31 +37,27 @@ export async function GET() {
 export async function PUT(request: NextRequest) {
   try {
     // ClerkからユーザーIDを取得
-    const { userId } = await auth();
+    const user = await currentUser();
     
-    if (!userId) {
+    if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
-    const profileData = await request.json();
+    const userId = user.id;
+    const rawData = await request.json();
     
-    // 必要なフィールドをチェック
-    const { name, email, phone, country_code, bio } = profileData;
-    
-    if (!name || !email) {
+    // 入力検証とサニタイゼーション
+    let sanitizedData;
+    try {
+      sanitizedData = validateAndSanitizeProfile(rawData);
+    } catch (validationError) {
       return NextResponse.json(
-        { error: 'Name and email are required' },
+        { error: 'Invalid input data', details: (validationError as Error).message },
         { status: 400 }
       );
     }
 
-    const success = await updateProfile(userId, {
-      name,
-      email,
-      phone: phone || '',
-      country_code: country_code || '+81',
-      bio: bio || ''
-    });
+    const success = await updateProfile(userId, sanitizedData);
 
     if (!success) {
       return NextResponse.json(
