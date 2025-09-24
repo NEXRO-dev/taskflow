@@ -12,12 +12,12 @@ export async function initializeDatabase() {
     // プロフィールテーブルを作成
     await turso.execute(`
       CREATE TABLE IF NOT EXISTS user_profiles (
-        id TEXT PRIMARY KEY DEFAULT 'default_user',
-        name TEXT NOT NULL DEFAULT '田中太郎',
-        email TEXT DEFAULT 'tanaka@example.com',
-        phone TEXT DEFAULT '90-1234-5678',
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        email TEXT,
+        phone TEXT,
         country_code TEXT DEFAULT '+81',
-        bio TEXT DEFAULT 'プロジェクトマネージャーとして働いています。効率的なタスク管理を心がけています。',
+        bio TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
       )
@@ -26,7 +26,7 @@ export async function initializeDatabase() {
     // 設定テーブルを作成
     await turso.execute(`
       CREATE TABLE IF NOT EXISTS user_settings (
-        user_id TEXT PRIMARY KEY DEFAULT 'default_user',
+        user_id TEXT PRIMARY KEY,
         dark_mode BOOLEAN DEFAULT FALSE,
         email_notifications BOOLEAN DEFAULT TRUE,
         push_notifications BOOLEAN DEFAULT TRUE,
@@ -51,14 +51,7 @@ export async function initializeDatabase() {
       )
     `);
 
-    // デフォルトのユーザーデータを挿入（存在しない場合のみ）
-    await turso.execute(`
-      INSERT OR IGNORE INTO user_profiles (id) VALUES ('default_user')
-    `);
-
-    await turso.execute(`
-      INSERT OR IGNORE INTO user_settings (user_id) VALUES ('default_user')
-    `);
+    // テーブル作成完了（デフォルトユーザーの挿入は削除）
 
     console.log('Database initialized successfully');
   } catch (error) {
@@ -166,11 +159,12 @@ export async function getUnreadNotificationCount(userId: string) {
 }
 
 // プロフィール情報を取得
-export async function getProfile() {
+export async function getProfile(userId: string) {
   try {
-    const result = await turso.execute(`
-      SELECT * FROM user_profiles WHERE id = 'default_user'
-    `);
+    const result = await turso.execute({
+      sql: `SELECT * FROM user_profiles WHERE id = ?`,
+      args: [userId]
+    });
     return result.rows[0] || null;
   } catch (error) {
     console.error('Failed to get profile:', error);
@@ -179,7 +173,7 @@ export async function getProfile() {
 }
 
 // プロフィール情報を更新
-export async function updateProfile(profileData: {
+export async function updateProfile(userId: string, profileData: {
   name: string;
   email: string;
   phone: string;
@@ -187,14 +181,32 @@ export async function updateProfile(profileData: {
   bio: string;
 }) {
   try {
-    await turso.execute({
-      sql: `
-        UPDATE user_profiles 
-        SET name = ?, email = ?, phone = ?, country_code = ?, bio = ?, updated_at = CURRENT_TIMESTAMP 
-        WHERE id = 'default_user'
-      `,
-      args: [profileData.name, profileData.email, profileData.phone, profileData.country_code, profileData.bio]
+    // まず、ユーザーのプロフィールが存在するかチェック
+    const existingProfile = await turso.execute({
+      sql: `SELECT id FROM user_profiles WHERE id = ?`,
+      args: [userId]
     });
+
+    if (existingProfile.rows.length === 0) {
+      // プロフィールが存在しない場合は新規作成
+      await turso.execute({
+        sql: `
+          INSERT INTO user_profiles (id, name, email, phone, country_code, bio)
+          VALUES (?, ?, ?, ?, ?, ?)
+        `,
+        args: [userId, profileData.name, profileData.email, profileData.phone, profileData.country_code, profileData.bio]
+      });
+    } else {
+      // プロフィールが存在する場合は更新
+      await turso.execute({
+        sql: `
+          UPDATE user_profiles 
+          SET name = ?, email = ?, phone = ?, country_code = ?, bio = ?, updated_at = CURRENT_TIMESTAMP
+          WHERE id = ?
+        `,
+        args: [profileData.name, profileData.email, profileData.phone, profileData.country_code, profileData.bio, userId]
+      });
+    }
     return true;
   } catch (error) {
     console.error('Failed to update profile:', error);

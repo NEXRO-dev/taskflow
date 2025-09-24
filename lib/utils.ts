@@ -9,6 +9,7 @@ export function cn(...inputs: ClassValue[]) {
 export function isClerkConfigured(): boolean {
   const publishable = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY;
   const secret = process.env.CLERK_SECRET_KEY;
+  
   if (!publishable || !secret) return false;
   const looksLikePk = publishable.startsWith('pk_');
   const looksLikeSk = secret.startsWith('sk_');

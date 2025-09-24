@@ -115,37 +115,39 @@ function SettingsContent() {
     }));
   }, [getUserTasks]);
 
-  // Clerkのユーザー情報を初期値として設定（データベースに保存された情報がない場合のみ）
+  // Clerkのユーザー情報を常に最優先として設定
   useEffect(() => {
-    if (user && !profile.name) {
+    if (user) {
       setProfile(prev => ({
         ...prev,
         name: user.fullName || user.firstName || 'ユーザー',
         email: user.primaryEmailAddress?.emailAddress || prev.email,
         phone: user.phoneNumbers?.[0]?.phoneNumber || prev.phone,
         countryCode: prev.countryCode || '+81',
-        bio: prev.bio || 'プロジェクトマネージャーとして働いています。効率的なタスク管理を心がけています。'
+        bio: prev.bio || ''
       }));
     }
-  }, [user, profile.name]);
+  }, [user]);
 
-  // データベースからデータを読み込む
+  // データベースからデータを読み込む（Clerkユーザー情報は上書きしない）
   useEffect(() => {
     const loadData = async () => {
       try {
         setLoading(true);
         
-        // プロフィール情報を読み込み
+        // プロフィール情報を読み込み（ただし、Clerkの情報がある場合は電話番号とbioのみ使用）
         const profileResponse = await fetch('/api/profile');
         if (profileResponse.ok) {
           const profileData = await profileResponse.json();
-          setProfile({
-            name: profileData.name || '',
-            email: profileData.email || '',
-            phone: profileData.phone || '',
-            countryCode: profileData.country_code || '+81',
-            bio: profileData.bio || ''
-          });
+          setProfile(prev => ({
+            ...prev,
+            // Clerkの情報がない場合のみDBから名前とメールを使用
+            name: user?.fullName || user?.firstName || profileData.name || prev.name,
+            email: user?.primaryEmailAddress?.emailAddress || profileData.email || prev.email,
+            phone: user?.phoneNumbers?.[0]?.phoneNumber || profileData.phone || prev.phone,
+            countryCode: profileData.country_code || prev.countryCode || '+81',
+            bio: profileData.bio || prev.bio || ''
+          }));
         }
         
         // 設定情報を読み込み
@@ -167,7 +169,7 @@ function SettingsContent() {
     };
 
     loadData();
-  }, []);
+  }, [user]);
 
   const countryCodes = [
     { code: '+81', country: '日本', flag: '🇯🇵' },

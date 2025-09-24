@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getProfile, updateProfile, initializeDatabase } from '@/lib/turso';
+import { auth } from '@clerk/nextjs/server';
 
 // プロフィール情報を取得
 export async function GET() {
@@ -7,7 +8,14 @@ export async function GET() {
     // データベースを初期化（初回のみ）
     await initializeDatabase();
     
-    const profile = await getProfile();
+    // ClerkからユーザーIDを取得
+    const { userId } = await auth();
+    
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    
+    const profile = await getProfile(userId);
     
     if (!profile) {
       return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
@@ -26,6 +34,13 @@ export async function GET() {
 // プロフィール情報を更新
 export async function PUT(request: NextRequest) {
   try {
+    // ClerkからユーザーIDを取得
+    const { userId } = await auth();
+    
+    if (!userId) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    
     const profileData = await request.json();
     
     // 必要なフィールドをチェック
@@ -38,7 +53,7 @@ export async function PUT(request: NextRequest) {
       );
     }
 
-    const success = await updateProfile({
+    const success = await updateProfile(userId, {
       name,
       email,
       phone: phone || '',
@@ -54,7 +69,7 @@ export async function PUT(request: NextRequest) {
     }
 
     // 更新後のプロフィールを返す
-    const updatedProfile = await getProfile();
+    const updatedProfile = await getProfile(userId);
     return NextResponse.json(updatedProfile);
     
   } catch (error) {
