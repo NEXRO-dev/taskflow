@@ -126,8 +126,8 @@ export default clerkMiddleware(async (auth, request: NextRequest) => {
   // Rate Limiting
   const pathname = request.nextUrl.pathname;
   
-  // 認証関連のエンドポイント
-  if (pathname.includes('/sign-in') || pathname.includes('/sign-up')) {
+          // 認証関連のエンドポイント（サインインのみ）
+          if (pathname.includes('/sign-in')) {
     const rateCheck = await withRateLimit(request, authLimiter);
     if (!rateCheck.success) {
       logSecurityEvent(

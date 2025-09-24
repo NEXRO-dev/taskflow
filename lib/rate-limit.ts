@@ -80,9 +80,9 @@ class RateLimiter {
 // 開発環境では制限を緩和
 const isDevelopment = process.env.NODE_ENV === 'development';
 
-export const generalLimiter = new RateLimiter(60000, isDevelopment ? 1000 : 100); // 開発時: 1分間に1000リクエスト、本番: 100リクエスト
-export const authLimiter = new RateLimiter(900000, isDevelopment ? 50 : 5); // 開発時: 15分間に50回、本番: 5回
-export const apiLimiter = new RateLimiter(60000, isDevelopment ? 500 : 50); // 開発時: 1分間に500リクエスト、本番: 50リクエスト
+export const generalLimiter = new RateLimiter(60000, isDevelopment ? 1000 : 500); // 開発時: 1分間に1000リクエスト、本番: 500リクエスト
+export const authLimiter = new RateLimiter(900000, isDevelopment ? 100 : 50); // 開発時: 15分間に100回、本番: 50回
+export const apiLimiter = new RateLimiter(60000, isDevelopment ? 500 : 200); // 開発時: 1分間に500リクエスト、本番: 200リクエスト
 
 // リクエストからIPアドレスを取得
 export function getClientIP(request: NextRequest): string {
