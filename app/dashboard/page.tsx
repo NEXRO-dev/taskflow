@@ -200,7 +200,7 @@ function DashboardContent() {
       <div className={`transition-all duration-300 ${isSidebarCollapsed ? 'lg:ml-20' : 'lg:ml-72'}`}>
         <ModernHeader onMenuToggle={() => setSidebarOpen(!sidebarOpen)} />
         
-        <main className="p-6">
+        <main className="p-6 pb-24">
           <div className="opacity-100">
             {renderCurrentView()}
           </div>

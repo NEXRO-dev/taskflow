@@ -62,36 +62,32 @@ export default function DashboardWidgets() {
 
   const statsCards = [
     {
-      title: '総タスク数',
-      value: totalTasks,
-      change: '+12%',
-      trend: 'up',
+      title: '今日のタスク',
+      value: todayTasks,
       icon: CheckCircle,
-      color: 'gray'
-    },
-    {
-      title: '完了済み',
-      value: completedTasks,
-      change: '+8%',
-      trend: 'up',
-      icon: Trophy,
-      color: 'gray'
-    },
-    {
-      title: '今日の予定',
-      value: todayEvents,
-      change: '+5%',
-      trend: 'up',
-      icon: Calendar,
-      color: 'gray'
+      color: 'blue',
+      action: () => setView('list')
     },
     {
       title: '期限切れ',
       value: overdueTasks,
-      change: '+2%',
-      trend: 'up',
       icon: AlertTriangle,
-      color: 'gray'
+      color: 'red',
+      action: () => setView('list')
+    },
+    {
+      title: '今日の予定',
+      value: todayEvents,
+      icon: Calendar,
+      color: 'green',
+      action: () => setView('calendar')
+    },
+    {
+      title: '今週のタスク',
+      value: weeklyTasks,
+      icon: CalendarDays,
+      color: 'purple',
+      action: () => setView('list')
     }
   ];
 
@@ -115,27 +111,26 @@ export default function DashboardWidgets() {
         {statsCards.map((stat, index) => (
           <div
             key={stat.title}
-            className="bg-white border border-gray-200 rounded-lg p-6 hover:shadow-sm transition-all"
+            onClick={stat.action}
+            className={`bg-white border border-gray-200 rounded-lg p-6 hover:shadow-md transition-all cursor-pointer hover:border-${stat.color}-200`}
           >
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm font-medium text-gray-600">{stat.title}</p>
                 <p className="text-2xl font-bold text-gray-900 mt-1">{stat.value}</p>
               </div>
-              <div className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center">
-                <stat.icon className="h-6 w-6 text-gray-600" />
+              <div className={`w-12 h-12 bg-${stat.color}-100 rounded-lg flex items-center justify-center`}>
+                <stat.icon className={`h-6 w-6 text-${stat.color}-600`} />
               </div>
             </div>
-            <div className="flex items-center mt-4">
-              {stat.trend === 'up' ? (
-                <ArrowUpRight className="h-4 w-4 text-gray-500" />
-              ) : (
-                <ArrowDownRight className="h-4 w-4 text-gray-500" />
-              )}
-              <span className="text-sm font-medium ml-1 text-gray-600">
-                {stat.change}
-              </span>
-              <span className="text-sm text-gray-500 ml-1">先月比</span>
+            <div className="mt-4">
+              <div className="text-xs text-gray-500 mb-1">
+                {stat.title === '今日のタスク' && todayTasks > 0 && `今日期限: ${todayTasks}件`}
+                {stat.title === '期限切れ' && overdueTasks > 0 && '要対応'}
+                {stat.title === '今日の予定' && todayEvents > 0 && '本日スケジュール'}
+                {stat.title === '今週のタスク' && weeklyTasks > 0 && '今週期限'}
+                {stat.value === 0 && 'なし'}
+              </div>
             </div>
           </div>
         ))}
@@ -148,55 +143,75 @@ export default function DashboardWidgets() {
           className="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all"
         >
           <div className="flex items-center justify-between mb-6">
-            <h3 className="text-lg font-semibold text-gray-900">進捗概要</h3>
-            <div className="flex items-center space-x-2">
-              <BarChart3 className="h-5 w-5 text-gray-400" />
-              <span className="text-sm text-gray-500">今月</span>
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">進捗概要</h3>
+              <p className="text-sm text-gray-600">タスクの完了状況</p>
+            </div>
+            <div className="text-right">
+              <div className="text-2xl font-bold text-gray-900">{completionRate}%</div>
+              <div className="text-sm text-gray-600">全体完了率</div>
             </div>
           </div>
           
-          <div className="space-y-4">
-            {/* Completion Rate */}
+          <div className="space-y-6">
+            {/* 今日の進捗 */}
             <div>
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-700">完了率</span>
-                <span className="text-sm font-bold text-gray-900">{completionRate}%</span>
+                <span className="text-sm font-medium text-gray-700">今日のタスク</span>
+                <span className="text-sm text-gray-600">
+                  {tasks.filter(t => t.dueDate && isToday(new Date(t.dueDate)) && t.completed).length} / {todayTasks}
+                </span>
               </div>
-              <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-gray-900"
+              <div className="w-full bg-gray-200 rounded-full h-4">
+                <div 
+                  className="bg-blue-500 h-4 rounded-full transition-all duration-500 ease-out"
+                  style={{ 
+                    width: `${todayTasks > 0 ? (tasks.filter(t => t.dueDate && isToday(new Date(t.dueDate)) && t.completed).length / todayTasks) * 100 : 0}%` 
+                  }}
+                ></div>
+              </div>
+              <div className="text-xs text-gray-500 mt-1">
+                {todayTasks > 0 ? `${Math.round((tasks.filter(t => t.dueDate && isToday(new Date(t.dueDate)) && t.completed).length / todayTasks) * 100)}%` : '0%'} 完了
+              </div>
+            </div>
+
+            {/* 今週の進捗 */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-gray-700">今週のタスク</span>
+                <span className="text-sm text-gray-600">
+                  {tasks.filter(t => t.dueDate && isThisWeek(new Date(t.dueDate)) && t.completed).length} / {weeklyTasks}
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-4">
+                <div 
+                  className="bg-green-500 h-4 rounded-full transition-all duration-500 ease-out"
+                  style={{ 
+                    width: `${weeklyTasks > 0 ? (tasks.filter(t => t.dueDate && isThisWeek(new Date(t.dueDate)) && t.completed).length / weeklyTasks) * 100 : 0}%` 
+                  }}
+                ></div>
+              </div>
+              <div className="text-xs text-gray-500 mt-1">
+                {weeklyTasks > 0 ? `${Math.round((tasks.filter(t => t.dueDate && isThisWeek(new Date(t.dueDate)) && t.completed).length / weeklyTasks) * 100)}%` : '0%'} 完了
+              </div>
+            </div>
+
+            {/* 全体の進捗 */}
+            <div>
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-sm font-medium text-gray-700">全体のタスク</span>
+                <span className="text-sm text-gray-600">
+                  {completedTasks} / {totalTasks}
+                </span>
+              </div>
+              <div className="w-full bg-gray-200 rounded-full h-4">
+                <div 
+                  className="bg-purple-500 h-4 rounded-full transition-all duration-500 ease-out"
                   style={{ width: `${completionRate}%` }}
-                />
+                ></div>
               </div>
-            </div>
-
-            {/* Task Progress */}
-            <div>
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-sm font-medium text-gray-700">今月の進捗</span>
-                <span className="text-sm font-bold text-gray-900">{monthlyCompleted}件</span>
-              </div>
-              <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
-                <div
-                  className="h-full bg-gray-700"
-                  style={{ width: `${Math.min((monthlyCompleted / 10) * 100, 100)}%` }}
-                />
-              </div>
-            </div>
-
-            {/* Weekly Goals */}
-            <div className="grid grid-cols-3 gap-4 pt-4">
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">{weeklyTasks}</div>
-                <div className="text-xs text-gray-500">今週のタスク</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">{monthlyCompleted}</div>
-                <div className="text-xs text-gray-500">今月完了</div>
-              </div>
-              <div className="text-center">
-                <div className="text-2xl font-bold text-gray-900">{totalTasks}</div>
-                <div className="text-xs text-gray-500">総タスク数</div>
+              <div className="text-xs text-gray-500 mt-1">
+                {completionRate}% 完了
               </div>
             </div>
           </div>
@@ -282,3 +297,4 @@ export default function DashboardWidgets() {
     </div>
   );
 }
+

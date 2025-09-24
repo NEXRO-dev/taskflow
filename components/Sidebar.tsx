@@ -36,7 +36,7 @@ interface Profile {
 
 const navItems = [
   { icon: LayoutDashboard, label: 'ダッシュボード', href: '/dashboard', view: 'dashboard', plan: 'Free' },
-  { icon: CheckSquare, label: 'タスク', href: '/tasks', view: 'list', plan: 'Free' },
+  { icon: CheckSquare, label: 'タスク・予定', href: '/tasks', view: 'list', plan: 'Free' },
   { icon: Calendar, label: 'カレンダー', href: '/calendar', view: 'calendar', plan: 'Free' },
   { icon: FolderOpen, label: 'プロジェクト', href: '/projects', view: 'projects', plan: 'Pro' },
   { icon: BarChart3, label: '分析', href: '/analytics', view: 'analytics', plan: 'Pro' },

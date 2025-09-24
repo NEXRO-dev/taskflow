@@ -251,7 +251,11 @@ export default function AddTaskForm() {
 
       {/* Floating Add Button - Hidden on settings page */}
       {currentView !== 'settings' && (
-        <div className="fixed bottom-6 right-6 md:bottom-8 md:right-8 z-50">
+        <div className={`fixed z-50 ${
+          currentView === 'dashboard' 
+            ? 'bottom-8 right-8 md:bottom-12 md:right-12 lg:bottom-8 lg:right-8' 
+            : 'bottom-6 right-6 md:bottom-8 md:right-8 lg:bottom-8 lg:right-8'
+        }`}>
           <button
             onClick={() => {
               setIsOpen(true);
