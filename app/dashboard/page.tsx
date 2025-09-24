@@ -23,7 +23,13 @@ function DashboardContent() {
 
   useEffect(() => {
     const enabled = isClerkConfigured();
-    if (!enabled) return; // Clerk未設定時は認証リダイレクトを無効化
+    if (!enabled) {
+      // Clerk未設定時はログインページにリダイレクト
+      router.push('/sign-in');
+      return;
+    }
+    
+    // Clerkが設定されている場合は認証状態をチェック
     if (isLoaded && !isSignedIn) {
       router.push('/sign-in');
     } else if (isLoaded && isSignedIn && user) {
@@ -89,6 +95,19 @@ function DashboardContent() {
     }
   }, [currentView, isLoaded, isSignedIn, searchParams, router]);
 
+  // Clerkが未設定の場合は認証ページにリダイレクト
+  const enabled = isClerkConfigured();
+  if (!enabled) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-600">認証設定を確認中...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!isLoaded) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -100,8 +119,15 @@ function DashboardContent() {
     );
   }
 
-  if (isClerkConfigured() && !isSignedIn) {
-    return null;
+  if (!isSignedIn) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+          <p className="text-gray-600">認証中...</p>
+        </div>
+      </div>
+    );
   }
 
   const renderCurrentView = () => {
