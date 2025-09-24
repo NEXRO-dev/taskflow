@@ -4,16 +4,24 @@ import { useState, useEffect } from 'react';
 // import { motion, AnimatePresence } from 'framer-motion'; // Removed animations
 import { useTaskStore } from '@/lib/store';
 import { Plus, X, Calendar, Flag, Mic, MicOff } from 'lucide-react';
+import TimePickerCustom from './TimePickerCustom';
+import DatePickerCustom from './DatePickerCustom';
 
 export default function AddTaskForm() {
-  const { addTask, currentView } = useTaskStore();
+  const { addTask, addEvent, currentView } = useTaskStore();
   const [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState(1);
+  const [itemType, setItemType] = useState<'task' | 'event'>('task');
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [priority, setPriority] = useState<'low' | 'medium' | 'high'>('medium');
   const [dueDate, setDueDate] = useState('');
   const [dueTime, setDueTime] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [endTime, setEndTime] = useState('');
+  const [location, setLocation] = useState('');
+  const [isAllDay, setIsAllDay] = useState(false);
+  const [color, setColor] = useState<'blue' | 'green' | 'red' | 'yellow' | 'orange' | 'purple' | 'pink' | 'indigo' | 'gray'>('blue');
   const [reminder, setReminder] = useState<number | undefined>(undefined);
   const [isListening, setIsListening] = useState(false);
 
@@ -102,9 +110,9 @@ export default function AddTaskForm() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
-    console.log('handleSubmit called', { step, title });
+    console.log('handleSubmit called', { step, title, itemType });
     
-    // ステップ3の時のみタスクを作成
+    // ステップ3の時のみタスクまたは予定を作成
     if (step !== 3) {
       console.log('Not step 3, returning');
       return;
@@ -115,35 +123,75 @@ export default function AddTaskForm() {
       return;
     }
 
-    console.log('Creating task with data:', {
-      title,
-      description,
-      priority,
-      dueDate,
-      dueTime,
-      reminder
-    });
+    if (itemType === 'task') {
+      console.log('Creating task with data:', {
+        title,
+        description,
+        priority,
+        dueDate,
+        dueTime,
+        reminder
+      });
 
-    addTask({
-      title,
-      description,
-      completed: false,
-      priority,
-      dueDate: dueDate ? new Date(dueDate) : undefined,
-      dueTime: dueTime || undefined,
-      reminder: reminder || undefined,
-      subtasks: []
-    });
+      addTask({
+        title,
+        description,
+        completed: false,
+        priority,
+        dueDate: dueDate ? new Date(dueDate) : undefined,
+        dueTime: dueTime || undefined,
+        reminder: reminder || undefined,
+        subtasks: [],
+        type: 'task'
+      });
+    } else {
+      console.log('Creating event with data:', {
+        title,
+        description,
+        dueDate,
+        dueTime,
+        endDate,
+        endTime,
+        location,
+        isAllDay,
+        reminder
+      });
 
-    console.log('Task created, resetting form');
+      addEvent({
+        title,
+        description,
+        priority,
+        dueDate: dueDate ? new Date(dueDate) : undefined,
+        dueTime: isAllDay ? undefined : (dueTime || undefined),
+        endDate: endDate ? new Date(endDate) : (dueDate ? new Date(dueDate) : undefined),
+        endTime: isAllDay ? undefined : (endTime || undefined),
+        location: location || undefined,
+        isAllDay: isAllDay,
+        color: color,
+        reminder: reminder || undefined,
+        type: 'event'
+      });
+    }
+
+    console.log(`${itemType === 'task' ? 'Task' : 'Event'} created, resetting form`);
 
     // Reset form
+    resetForm();
+  };
+
+  const resetForm = () => {
     setTitle('');
     setDescription('');
     setPriority('medium');
     setDueDate('');
     setDueTime('');
+    setEndDate('');
+    setEndTime('');
+    setLocation('');
+    setIsAllDay(false);
+    setColor('blue');
     setReminder(undefined);
+    setItemType('task');
     setStep(1);
     setIsOpen(false);
   };
@@ -229,7 +277,9 @@ export default function AddTaskForm() {
           >
               <div className="flex items-center justify-between mb-4 md:mb-6">
                 <div>
-                  <h2 className="text-lg md:text-xl font-bold text-gray-900">新しいタスクを追加</h2>
+                  <h2 className="text-lg md:text-xl font-bold text-gray-900">
+                    新しい{itemType === 'task' ? 'タスク' : '予定'}を追加
+                  </h2>
                   <div className="flex items-center space-x-1 mt-2">
                     {[1, 2, 3].map((stepNumber) => (
                       <div
@@ -254,9 +304,47 @@ export default function AddTaskForm() {
                 <div className="min-h-[200px]">
                   {step === 1 && (
                     <div className="space-y-4">
+                      {/* タスク/予定の選択 */}
+                      <div>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">何を追加しますか？</h3>
+                        <div className="grid grid-cols-2 gap-3 mb-6">
+                          <button
+                            type="button"
+                            onClick={() => setItemType('task')}
+                            className={`p-4 rounded-lg border-2 transition-all ${
+                              itemType === 'task'
+                                ? 'border-gray-900 bg-gray-50'
+                                : 'border-gray-200 hover:border-gray-300'
+                            }`}
+                          >
+                            <div className="text-center">
+                              <Flag className="h-6 w-6 mx-auto mb-2 text-gray-700" />
+                              <div className="font-medium text-gray-900">タスク</div>
+                              <div className="text-xs text-gray-500">完了が必要な作業</div>
+                            </div>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setItemType('event')}
+                            className={`p-4 rounded-lg border-2 transition-all ${
+                              itemType === 'event'
+                                ? 'border-gray-900 bg-gray-50'
+                                : 'border-gray-200 hover:border-gray-300'
+                            }`}
+                          >
+                            <div className="text-center">
+                              <Calendar className="h-6 w-6 mx-auto mb-2 text-gray-700" />
+                              <div className="font-medium text-gray-900">予定</div>
+                              <div className="text-xs text-gray-500">イベントや会議</div>
+                            </div>
+                          </button>
+                        </div>
+                      </div>
                     
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900 mb-4">タスクの内容は？</h3>
+                        <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                          {itemType === 'task' ? 'タスクの内容は？' : '予定の内容は？'}
+                        </h3>
                         <div className="space-y-2">
                           <div className="relative">
                             <input
@@ -324,30 +412,52 @@ export default function AddTaskForm() {
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900 mb-4">設定</h3>
                         <div className="space-y-6">
-                          {/* 優先度 */}
-                          <div>
-                            <label className="text-sm font-medium text-gray-700 mb-2 block">優先度</label>
-                            <div className="grid grid-cols-3 gap-2">
-                              {(['low', 'medium', 'high'] as const).map((level, idx) => (
-                                <button
-                                  key={level}
-                                  type="button"
-                                  onClick={() => setPriority(level)}
-                                  className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                                    priority === level
-                                      ? 'bg-gray-900 text-white'
-                                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                                  }`}
-                                >
-                                  {['低', '中', '高'][idx]}
-                                </button>
-                              ))}
+                          {/* 優先度（タスクのみ） */}
+                          {itemType === 'task' && (
+                            <div>
+                              <label className="text-sm font-medium text-gray-700 mb-2 block">優先度</label>
+                              <div className="grid grid-cols-3 gap-2">
+                                {(['low', 'medium', 'high'] as const).map((level, idx) => (
+                                  <button
+                                    key={level}
+                                    type="button"
+                                    onClick={() => setPriority(level)}
+                                    className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                                      priority === level
+                                        ? 'bg-gray-900 text-white'
+                                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                    }`}
+                                  >
+                                    {['低', '中', '高'][idx]}
+                                  </button>
+                                ))}
+                              </div>
                             </div>
-                          </div>
+                          )}
+
+                          {/* 終日予定（予定のみ） */}
+                          {itemType === 'event' && (
+                            <div>
+                              <label className="flex items-center space-x-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer">
+                                <input
+                                  type="checkbox"
+                                  checked={isAllDay}
+                                  onChange={(e) => setIsAllDay(e.target.checked)}
+                                  className="rounded border-gray-300"
+                                />
+                                <div>
+                                  <div className="text-sm font-medium text-gray-900">終日予定</div>
+                                  <div className="text-xs text-gray-500">時間指定なしの予定</div>
+                                </div>
+                              </label>
+                            </div>
+                          )}
                           
-                          {/* 期限日 */}
+                          {/* 開始日 */}
                           <div>
-                            <label className="text-sm font-medium text-gray-700 mb-2 block">期限日</label>
+                            <label className="text-sm font-medium text-gray-700 mb-2 block">
+                              {itemType === 'task' ? '期限日' : '開始日'}
+                            </label>
                             <div className="space-y-3">
                               {/* クイック設定ボタン */}
                               <div className="grid grid-cols-3 gap-2">
@@ -378,25 +488,128 @@ export default function AddTaskForm() {
                               </div>
                               
                               {/* 日付入力 */}
-                              <input
-                                type="date"
+                              <DatePickerCustom
                                 value={dueDate}
-                                onChange={(e) => setDueDate(e.target.value)}
-                                className="w-full px-4 py-3 text-base rounded-lg border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none transition-all"
+                                onChange={setDueDate}
+                                placeholder="日付を選択してください"
                               />
                             </div>
                           </div>
 
-                          {/* 時間 */}
-                          {dueDate && (
+                          {/* 開始時間 */}
+                          {dueDate && !isAllDay && (
+                            <TimePickerCustom
+                              value={dueTime}
+                              onChange={setDueTime}
+                              label={itemType === 'task' ? '時間（任意）' : '開始時間'}
+                              placeholder="時間を選択してください"
+                            />
+                          )}
+
+                          {/* 終了日（予定のみ） */}
+                          {itemType === 'event' && dueDate && (
+                            <DatePickerCustom
+                              value={endDate || dueDate}
+                              onChange={setEndDate}
+                              label="終了日"
+                              placeholder="終了日を選択してください"
+                              min={dueDate}
+                            />
+                          )}
+
+                          {/* 終了時間（予定のみ） */}
+                          {itemType === 'event' && dueDate && !isAllDay && (
+                            <TimePickerCustom
+                              value={endTime}
+                              onChange={setEndTime}
+                              label="終了時間"
+                              placeholder="終了時間を選択してください"
+                            />
+                          )}
+
+                          {/* 場所（予定のみ） */}
+                          {itemType === 'event' && (
                             <div>
-                              <label className="text-sm font-medium text-gray-700 mb-2 block">時間（任意）</label>
+                              <label className="text-sm font-medium text-gray-700 mb-2 block">場所（任意）</label>
                               <input
-                                type="time"
-                                value={dueTime}
-                                onChange={(e) => setDueTime(e.target.value)}
+                                type="text"
+                                value={location}
+                                onChange={(e) => setLocation(e.target.value)}
+                                placeholder="会議室、住所、オンラインなど"
                                 className="w-full px-4 py-3 text-base rounded-lg border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none transition-all"
                               />
+                            </div>
+                          )}
+
+                          {/* 色選択（予定のみ） */}
+                          {itemType === 'event' && (
+                            <div>
+                              <label className="text-sm font-medium text-gray-700 mb-2 block">色</label>
+                              <div className="space-y-3">
+                                {/* 1行目: 5色 */}
+                                <div className="flex gap-3 justify-center">
+                                  {[
+                                    { name: 'blue', color: 'bg-blue-500' },
+                                    { name: 'green', color: 'bg-green-500' },
+                                    { name: 'red', color: 'bg-red-500' },
+                                    { name: 'yellow', color: 'bg-yellow-500' },
+                                    { name: 'orange', color: 'bg-orange-500' }
+                                  ].map((colorOption) => (
+                                    <button
+                                      key={colorOption.name}
+                                      type="button"
+                                      onClick={() => setColor(colorOption.name as any)}
+                                      className={`w-8 h-8 rounded-full border-4 transition-all hover:scale-110 relative ${
+                                        colorOption.color
+                                      } ${
+                                        color === colorOption.name
+                                          ? 'border-gray-900 shadow-xl scale-110 ring-2 ring-gray-900 ring-offset-2'
+                                          : 'border-gray-300 hover:border-gray-400 hover:shadow-md'
+                                      }`}
+                                      title={colorOption.name}
+                                    >
+                                      {color === colorOption.name && (
+                                        <div className="absolute inset-0 flex items-center justify-center">
+                                          <div className="w-3 h-3 bg-white rounded-full shadow-sm border border-gray-300 flex items-center justify-center">
+                                            <div className="w-1.5 h-1.5 bg-gray-900 rounded-full"></div>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </button>
+                                  ))}
+                                </div>
+                                {/* 2行目: 4色 */}
+                                <div className="flex gap-3 justify-center">
+                                  {[
+                                    { name: 'purple', color: 'bg-purple-500' },
+                                    { name: 'pink', color: 'bg-pink-500' },
+                                    { name: 'indigo', color: 'bg-indigo-500' },
+                                    { name: 'gray', color: 'bg-gray-500' }
+                                  ].map((colorOption) => (
+                                    <button
+                                      key={colorOption.name}
+                                      type="button"
+                                      onClick={() => setColor(colorOption.name as any)}
+                                      className={`w-8 h-8 rounded-full border-4 transition-all hover:scale-110 relative ${
+                                        colorOption.color
+                                      } ${
+                                        color === colorOption.name
+                                          ? 'border-gray-900 shadow-xl scale-110 ring-2 ring-gray-900 ring-offset-2'
+                                          : 'border-gray-300 hover:border-gray-400 hover:shadow-md'
+                                      }`}
+                                      title={colorOption.name}
+                                    >
+                                      {color === colorOption.name && (
+                                        <div className="absolute inset-0 flex items-center justify-center">
+                                          <div className="w-3 h-3 bg-white rounded-full shadow-sm border border-gray-300 flex items-center justify-center">
+                                            <div className="w-1.5 h-1.5 bg-gray-900 rounded-full"></div>
+                                          </div>
+                                        </div>
+                                      )}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
                             </div>
                           )}
 

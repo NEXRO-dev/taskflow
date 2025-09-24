@@ -22,8 +22,9 @@ import { format, isToday, isThisWeek, isThisMonth } from 'date-fns';
 
 
 export default function DashboardWidgets() {
-  const { getUserTasks, userStats, setView } = useTaskStore();
+  const { getUserTasks, getUserEvents, userStats, setView } = useTaskStore();
   const tasks = getUserTasks();
+  const events = getUserEvents();
 
   console.log('DashboardWidgets rendered, total tasks:', tasks.length, tasks);
   
@@ -36,14 +37,21 @@ export default function DashboardWidgets() {
 
   // Statistics calculations
   const totalTasks = tasks.length;
+  const totalEvents = events.length;
   const completedTasks = tasks.filter(t => t.completed).length;
   const pendingTasks = totalTasks - completedTasks;
   const todayTasks = tasks.filter(t => t.dueDate && isToday(new Date(t.dueDate))).length;
+  const todayEvents = events.filter(e => e.dueDate && isToday(new Date(e.dueDate))).length;
   const overdueTasks = tasks.filter(t => {
     if (!t.completed && t.dueDate) {
       const today = new Date();
       const taskDate = new Date(t.dueDate);
-      return taskDate.toDateString() < today.toDateString();
+      
+      // 日付を正規化（時間を00:00:00に設定）
+      const todayNormalized = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+      const taskDateNormalized = new Date(taskDate.getFullYear(), taskDate.getMonth(), taskDate.getDate());
+      
+      return taskDateNormalized < todayNormalized;
     }
     return false;
   }).length;
@@ -70,11 +78,11 @@ export default function DashboardWidgets() {
       color: 'gray'
     },
     {
-      title: '進行中',
-      value: pendingTasks,
-      change: '-3%',
-      trend: 'down',
-      icon: Clock,
+      title: '今日の予定',
+      value: todayEvents,
+      change: '+5%',
+      trend: 'up',
+      icon: Calendar,
       color: 'gray'
     },
     {

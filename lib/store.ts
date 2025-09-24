@@ -15,6 +15,12 @@ export interface Task {
   xpValue: number;
   reminder?: number; // リマインダー (分前)
   userId: string; // ユーザーIDを追加
+  type: 'task' | 'event'; // タスクか予定かを区別
+  endDate?: Date; // 予定の終了日時（予定の場合）
+  endTime?: string; // 予定の終了時間（予定の場合）
+  location?: string; // 予定の場所（予定の場合）
+  isAllDay?: boolean; // 終日予定かどうか
+  color?: 'blue' | 'green' | 'red' | 'yellow' | 'orange' | 'purple' | 'pink' | 'indigo' | 'gray'; // 予定の色（予定の場合）
 }
 
 export interface Subtask {
@@ -38,6 +44,7 @@ interface TaskStore {
   isDarkMode: boolean;
   currentUserId: string | null;
   addTask: (task: Omit<Task, 'id' | 'createdAt' | 'xpValue' | 'userId'>) => void;
+  addEvent: (event: Omit<Task, 'id' | 'createdAt' | 'xpValue' | 'userId' | 'completed' | 'subtasks'>) => void;
   updateTask: (id: string, updates: Partial<Task>) => void;
   deleteTask: (id: string) => void;
   toggleTask: (id: string) => void;
@@ -50,6 +57,8 @@ interface TaskStore {
   toggleDarkMode: () => void;
   setCurrentUserId: (userId: string | null) => void;
   getUserTasks: () => Task[];
+  getUserEvents: () => Task[];
+  getAllItems: () => Task[];
 }
 
 export const useTaskStore = create<TaskStore>()(
@@ -81,6 +90,7 @@ export const useTaskStore = create<TaskStore>()(
           createdAt: new Date(),
           xpValue: taskData.priority === 'high' ? 30 : taskData.priority === 'medium' ? 20 : 10,
           userId: currentUserId,
+          type: taskData.type || 'task', // デフォルトはタスク
         };
         console.log('Created new task:', newTask);
         set((state) => {
@@ -88,6 +98,34 @@ export const useTaskStore = create<TaskStore>()(
             tasks: [...state.tasks, newTask]
           };
           console.log('Updated state, total tasks:', newState.tasks.length);
+          return newState;
+        });
+      },
+
+      addEvent: (eventData) => {
+        const { currentUserId } = get();
+        if (!currentUserId) {
+          console.error('ユーザーIDが設定されていません');
+          return;
+        }
+        
+        console.log('Store addEvent called with:', eventData);
+        const newEvent: Task = {
+          ...eventData,
+          id: crypto.randomUUID(),
+          createdAt: new Date(),
+          xpValue: 0, // 予定はXPなし
+          userId: currentUserId,
+          type: 'event',
+          completed: false, // 予定は完了概念なし（参加/不参加）
+          subtasks: [], // 予定にはサブタスクなし
+        };
+        console.log('Created new event:', newEvent);
+        set((state) => {
+          const newState = {
+            tasks: [...state.tasks, newEvent]
+          };
+          console.log('Updated state, total items:', newState.tasks.length);
           return newState;
         });
       },
@@ -237,6 +275,16 @@ export const useTaskStore = create<TaskStore>()(
       },
 
       getUserTasks: () => {
+        const { tasks, currentUserId } = get();
+        return currentUserId ? tasks.filter(task => task.userId === currentUserId && task.type === 'task') : [];
+      },
+
+      getUserEvents: () => {
+        const { tasks, currentUserId } = get();
+        return currentUserId ? tasks.filter(task => task.userId === currentUserId && task.type === 'event') : [];
+      },
+
+      getAllItems: () => {
         const { tasks, currentUserId } = get();
         return currentUserId ? tasks.filter(task => task.userId === currentUserId) : [];
       }

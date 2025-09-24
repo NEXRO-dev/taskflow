@@ -13,7 +13,8 @@ import {
   Edit3,
   Sparkles,
   Clock,
-  Bell
+  Bell,
+  MapPin
 } from 'lucide-react';
 import { format } from 'date-fns';
 
@@ -67,18 +68,24 @@ export default function TaskCard({ task, index }: TaskCardProps) {
       {/* Task Header */}
       <div className="flex items-start justify-between">
         <div className="flex items-start space-x-3 flex-1">
-          <button
-            onClick={() => toggleTask(task.id)}
-            className={`mt-1 transition-colors ${
-              task.completed ? 'text-green-600' : 'text-gray-400 hover:text-primary'
-            }`}
-          >
-            {task.completed ? (
-              <CheckCircle2 className="h-5 w-5 fill-current" />
-            ) : (
-              <Circle className="h-5 w-5" />
-            )}
-          </button>
+          {task.type === 'task' ? (
+            <button
+              onClick={() => toggleTask(task.id)}
+              className={`mt-1 transition-colors ${
+                task.completed ? 'text-green-600' : 'text-gray-400 hover:text-primary'
+              }`}
+            >
+              {task.completed ? (
+                <CheckCircle2 className="h-5 w-5 fill-current" />
+              ) : (
+                <Circle className="h-5 w-5" />
+              )}
+            </button>
+          ) : (
+            <div className="mt-1 p-1">
+              <Calendar className="h-4 w-4 text-blue-600" />
+            </div>
+          )}
 
           <div className="flex-1">
             <h3 className={`font-medium transition-all ${
@@ -91,40 +98,60 @@ export default function TaskCard({ task, index }: TaskCardProps) {
               <p className="text-sm text-gray-600 mt-1">{task.description}</p>
             )}
 
-            {/* Task Meta */}
-            <div className="flex items-center space-x-3 mt-2">
-              <div className={`inline-flex items-center space-x-1 px-2 py-1 rounded-full text-xs border ${priorityColors[task.priority]}`}>
-                {priorityIcons[task.priority]}
-                <span className="capitalize">{task.priority === 'low' ? '低' : task.priority === 'medium' ? '中' : '高'}</span>
-              </div>
+            {/* Task/Event Meta */}
+            <div className="flex items-center space-x-3 mt-2 flex-wrap">
+              {/* 優先度（タスクのみ） */}
+              {task.type === 'task' && (
+                <div className={`inline-flex items-center space-x-1 px-2 py-1 rounded-full text-xs border ${priorityColors[task.priority]}`}>
+                  {priorityIcons[task.priority]}
+                  <span className="capitalize">{task.priority === 'low' ? '低' : task.priority === 'medium' ? '中' : '高'}</span>
+                </div>
+              )}
 
-                  {task.dueDate && (
-                    <div className="flex items-center space-x-1 text-xs text-gray-500">
-                      <Calendar className="h-3 w-3" />
-                      <span>
-                        {format(task.dueDate, 'MMM d')}
-                        {task.dueTime && ` ${task.dueTime}`}
-                      </span>
-                    </div>
-                  )}
+              {/* 日時情報 */}
+              {task.dueDate && (
+                <div className="flex items-center space-x-1 text-xs text-gray-500">
+                  <Clock className="h-3 w-3" />
+                  <span>
+                    {format(task.dueDate, 'MMM d')}
+                    {task.type === 'event' && task.isAllDay 
+                      ? ' (終日)' 
+                      : task.dueTime && ` ${task.dueTime}`}
+                    {task.type === 'event' && task.endTime && !task.isAllDay && 
+                      ` - ${task.endTime}`}
+                  </span>
+                </div>
+              )}
 
-                  {task.reminder && task.dueDate && (
-                    <div className="flex items-center space-x-1 text-xs text-blue-600">
-                      <Bell className="h-3 w-3" />
-                      <span>
-                        {task.reminder < 60 
-                          ? `${task.reminder}分前` 
-                          : task.reminder < 1440 
-                          ? `${Math.floor(task.reminder / 60)}時間前` 
-                          : `${Math.floor(task.reminder / 1440)}日前`
-                        }
-                      </span>
-                    </div>
-                  )}
+              {/* 場所（予定のみ） */}
+              {task.type === 'event' && task.location && (
+                <div className="flex items-center space-x-1 text-xs text-gray-500">
+                  <MapPin className="h-3 w-3" />
+                  <span>{task.location}</span>
+                </div>
+              )}
 
-              <div className="text-xs text-primary font-medium">
-                +{task.xpValue} XP
-              </div>
+              {/* リマインダー */}
+              {task.reminder && task.dueDate && (
+                <div className="flex items-center space-x-1 text-xs text-blue-600">
+                  <Bell className="h-3 w-3" />
+                  <span>
+                    {task.reminder < 60 
+                      ? `${task.reminder}分前` 
+                      : task.reminder < 1440 
+                      ? `${Math.floor(task.reminder / 60)}時間前` 
+                      : `${Math.floor(task.reminder / 1440)}日前`
+                    }
+                  </span>
+                </div>
+              )}
+
+              {/* XP（タスクのみ） */}
+              {task.type === 'task' && (
+                <div className="text-xs text-primary font-medium">
+                  +{task.xpValue} XP
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -142,13 +169,15 @@ export default function TaskCard({ task, index }: TaskCardProps) {
               <div
                 className="absolute right-0 top-8 glass rounded-lg border border-white/20 shadow-lg p-2 min-w-[150px] z-10"
               >
-                <button
-                  onClick={handleGenerateSubtasks}
-                  className="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-white/50 flex items-center space-x-2 text-primary"
-                >
-                  <Sparkles className="h-4 w-4" />
-                  <span>AIサブタスク</span>
-                </button>
+                {task.type === 'task' && (
+                  <button
+                    onClick={handleGenerateSubtasks}
+                    className="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-white/50 flex items-center space-x-2 text-primary"
+                  >
+                    <Sparkles className="h-4 w-4" />
+                    <span>AIサブタスク</span>
+                  </button>
+                )}
                 <button
                   onClick={() => deleteTask(task.id)}
                   className="w-full text-left px-3 py-2 text-sm rounded-lg hover:bg-white/50 flex items-center space-x-2 text-red-600"
@@ -161,8 +190,8 @@ export default function TaskCard({ task, index }: TaskCardProps) {
         </div>
       </div>
 
-      {/* Subtasks */}
-        {task.subtasks.length > 0 && (
+      {/* Subtasks (タスクのみ) */}
+        {task.type === 'task' && task.subtasks.length > 0 && (
           <div
             className="mt-4 space-y-2"
           >
