@@ -1,6 +1,5 @@
 'use client';
 
-import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { 
   Zap, 
@@ -25,23 +24,8 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 
-const fadeInUp = {
-  initial: { opacity: 0, y: 60 },
-  animate: { opacity: 1, y: 0 },
-  transition: { duration: 0.6 }
-};
-
-const staggerContainer = {
-  animate: {
-    transition: {
-      staggerChildren: 0.1
-    }
-  }
-};
-
 export default function LandingPage() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState('pro');
 
   const features = [
     {
@@ -174,23 +158,24 @@ export default function LandingPage() {
   ];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50 to-purple-50">
+    <div className="min-h-screen" style={{ background: 'linear-gradient(to bottom right, #f8fafc, #eff6ff, #faf5ff)' }}>
       {/* Navigation */}
-      <motion.nav 
-        className="glass sticky top-0 z-50 border-b border-white/20"
-        initial={{ y: -100 }}
-        animate={{ y: 0 }}
-        transition={{ duration: 0.6 }}
+      <nav 
+        className="sticky top-0 z-50 border-b"
+        style={{ 
+          backgroundColor: 'rgba(255, 255, 255, 0.8)', 
+          backdropFilter: 'blur(12px)', 
+          borderColor: 'rgba(255, 255, 255, 0.2)' 
+        }}
       >
         <div className="max-w-7xl mx-auto px-6 py-4">
           <div className="flex items-center justify-between">
             <Link href="/" className="flex items-center space-x-3">
               <div className="relative">
-                <Zap className="h-8 w-8 text-primary fill-current" />
-                <motion.div
-                  className="absolute -top-1 -right-1 w-3 h-3 bg-accent rounded-full"
-                  animate={{ scale: [1, 1.2, 1] }}
-                  transition={{ repeat: Infinity, duration: 2 }}
+                <Zap className="h-8 w-8 fill-current" style={{ color: '#3b82f6' }} />
+                <div
+                  className="absolute -top-1 -right-1 w-3 h-3 rounded-full"
+                  style={{ backgroundColor: '#8b5cf6' }}
                 />
               </div>
               <div>
@@ -206,7 +191,10 @@ export default function LandingPage() {
               <a href="#testimonials" className="text-gray-600 hover:text-gray-900 transition-colors">レビュー</a>
               <Link 
                 href="/sign-in"
-                className="bg-primary text-white px-6 py-2 rounded-lg hover:bg-primary/90 transition-colors"
+                className="text-white px-6 py-2 rounded-lg transition-colors"
+                style={{ backgroundColor: '#3b82f6' }}
+                onMouseEnter={(e) => e.target.style.backgroundColor = '#2563eb'}
+                onMouseLeave={(e) => e.target.style.backgroundColor = '#3b82f6'}
               >
                 ログイン
               </Link>
@@ -223,12 +211,7 @@ export default function LandingPage() {
 
           {/* Mobile Menu */}
           {isMenuOpen && (
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: 'auto' }}
-              exit={{ opacity: 0, height: 0 }}
-              className="md:hidden mt-4 pb-4 space-y-4"
-            >
+            <div className="md:hidden mt-4 pb-4 space-y-4">
               <a href="#features" className="block text-gray-600 hover:text-gray-900 transition-colors">機能</a>
               <a href="#pricing" className="block text-gray-600 hover:text-gray-900 transition-colors">料金</a>
               <a href="#testimonials" className="block text-gray-600 hover:text-gray-900 transition-colors">レビュー</a>
@@ -238,35 +221,33 @@ export default function LandingPage() {
               >
                 ダッシュボード
               </Link>
-            </motion.div>
+            </div>
           )}
         </div>
-      </motion.nav>
+      </nav>
 
       {/* Hero Section */}
       <section className="relative overflow-hidden py-20 lg:py-32">
         <div className="max-w-7xl mx-auto px-6">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
-            <motion.div
-              className="space-y-8"
-              initial={{ opacity: 0, x: -60 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8 }}
-            >
+            <div className="space-y-8">
               <div className="space-y-4">
-                <motion.div
-                  className="inline-flex items-center space-x-2 bg-primary/10 text-primary px-4 py-2 rounded-full text-sm font-medium"
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.2 }}
+                <div
+                  className="inline-flex items-center space-x-2 px-4 py-2 rounded-full text-sm font-medium"
+                  style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6' }}
                 >
                   <Sparkles className="h-4 w-4" />
                   <span>AI搭載タスク管理</span>
-                </motion.div>
+                </div>
                 
                 <h1 className="text-5xl lg:text-7xl font-bold text-gray-900 leading-tight">
                   生産性を
-                  <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
+                  <span style={{ 
+                    background: 'linear-gradient(to right, #3b82f6, #8b5cf6)', 
+                    backgroundClip: 'text', 
+                    WebkitBackgroundClip: 'text', 
+                    color: 'transparent' 
+                  }}>
                     革新する
                   </span>
                 </h1>
@@ -280,7 +261,10 @@ export default function LandingPage() {
               <div className="flex flex-col sm:flex-row gap-4">
                 <Link
                   href="/dashboard"
-                  className="bg-primary text-white px-8 py-4 rounded-xl font-semibold hover:bg-primary/90 transition-all hover:scale-105 flex items-center justify-center space-x-2"
+                  className="text-white px-8 py-4 rounded-xl font-semibold transition-all hover:scale-105 flex items-center justify-center space-x-2"
+                  style={{ backgroundColor: '#3b82f6' }}
+                  onMouseEnter={(e) => e.target.style.backgroundColor = '#2563eb'}
+                  onMouseLeave={(e) => e.target.style.backgroundColor = '#3b82f6'}
                 >
                   <span>今すぐ無料で始める</span>
                   <ArrowRight className="h-5 w-5" />
@@ -302,19 +286,21 @@ export default function LandingPage() {
                   <span>クレジットカード不要</span>
                 </div>
               </div>
-            </motion.div>
+            </div>
 
-            <motion.div
-              className="relative"
-              initial={{ opacity: 0, x: 60 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ duration: 0.8, delay: 0.2 }}
-            >
-              <div className="glass rounded-3xl p-8 border border-white/20">
+            <div className="relative">
+              <div 
+                className="rounded-3xl p-8 border"
+                style={{ 
+                  backgroundColor: 'rgba(255, 255, 255, 0.8)', 
+                  backdropFilter: 'blur(12px)', 
+                  borderColor: 'rgba(255, 255, 255, 0.2)' 
+                }}
+              >
                 <div className="space-y-6">
                   <div className="flex items-center justify-between">
                     <h3 className="text-lg font-semibold text-gray-900">今日のタスク</h3>
-                    <div className="flex items-center space-x-2 text-sm text-primary">
+                    <div className="flex items-center space-x-2 text-sm" style={{ color: '#3b82f6' }}>
                       <Trophy className="h-4 w-4" />
                       <span>レベル 12 • 2,450 XP</span>
                     </div>
@@ -327,14 +313,11 @@ export default function LandingPage() {
                       { title: 'プロジェクトロードマップ更新', completed: false, xp: 25 },
                       { title: 'クライアント向けプレゼン準備', completed: false, xp: 35 }
                     ].map((task, index) => (
-                      <motion.div
+                      <div
                         key={index}
                         className={`flex items-center space-x-3 p-3 rounded-lg ${
                           task.completed ? 'bg-green-50' : 'bg-white/50'
                         }`}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: 0.5 + index * 0.1 }}
                       >
                         <CheckCircle className={`h-5 w-5 ${
                           task.completed ? 'text-green-500' : 'text-gray-300'
@@ -345,27 +328,28 @@ export default function LandingPage() {
                           {task.title}
                         </span>
                         <span className="text-xs text-primary font-medium">+{task.xp} XP</span>
-                      </motion.div>
+                      </div>
                     ))}
                   </div>
                   
                   <div className="pt-4 border-t border-gray-200">
                     <div className="flex items-center justify-between text-sm">
                       <span className="text-gray-600">今日の進捗</span>
-                      <span className="text-primary font-medium">2/4 完了</span>
+                      <span className="font-medium" style={{ color: '#3b82f6' }}>2/4 完了</span>
                     </div>
                     <div className="mt-2 w-full bg-gray-200 rounded-full h-2">
-                      <motion.div
-                        className="bg-gradient-to-r from-primary to-accent h-2 rounded-full"
-                        initial={{ width: 0 }}
-                        animate={{ width: '50%' }}
-                        transition={{ delay: 1, duration: 1 }}
+                      <div
+                        className="h-2 rounded-full"
+                        style={{ 
+                          width: '50%', 
+                          background: 'linear-gradient(to right, #3b82f6, #8b5cf6)' 
+                        }}
                       />
                     </div>
                   </div>
                 </div>
               </div>
-            </motion.div>
+            </div>
           </div>
         </div>
       </section>
@@ -373,9 +357,8 @@ export default function LandingPage() {
       {/* Features Section */}
       <section id="features" className="py-20 lg:py-32">
         <div className="max-w-7xl mx-auto px-6">
-          <motion.div
+          <div
             className="text-center space-y-4 mb-16"
-            {...fadeInUp}
           >
             <h2 className="text-4xl lg:text-5xl font-bold text-gray-900">
               モダンチーム向けの
@@ -386,41 +369,30 @@ export default function LandingPage() {
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               最先端のAIで生産性を向上させ、あなたの働き方に合わせて設計された、必要な機能のすべてを提供します。
             </p>
-          </motion.div>
+          </div>
 
-          <motion.div
-            className="grid md:grid-cols-2 lg:grid-cols-3 gap-8"
-            variants={staggerContainer}
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true }}
-          >
+          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
             {features.map((feature, index) => (
-              <motion.div
+              <div
                 key={index}
                 className="glass rounded-2xl p-8 border border-white/20 hover:shadow-xl transition-all hover:scale-105"
-                variants={fadeInUp}
               >
                 <div className={`w-12 h-12 rounded-xl bg-gradient-to-r ${feature.color} flex items-center justify-center mb-6`}>
                   <feature.icon className="h-6 w-6 text-white" />
                 </div>
                 <h3 className="text-xl font-semibold text-gray-900 mb-3">{feature.title}</h3>
                 <p className="text-gray-600 leading-relaxed">{feature.description}</p>
-              </motion.div>
+              </div>
             ))}
-          </motion.div>
+          </div>
         </div>
       </section>
 
       {/* Stats Section */}
       <section className="py-20 bg-gradient-to-r from-primary to-accent">
         <div className="max-w-7xl mx-auto px-6">
-          <motion.div
+          <div
             className="grid grid-cols-2 lg:grid-cols-4 gap-8 text-center text-white"
-            variants={staggerContainer}
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true }}
           >
             {[
               { number: '50K+', label: 'アクティブユーザー' },
@@ -428,21 +400,20 @@ export default function LandingPage() {
               { number: '300+', label: '連携サービス' },
               { number: '99.9%', label: 'アップタイム' }
             ].map((stat, index) => (
-              <motion.div key={index} variants={fadeInUp}>
+              <div key={index} >
                 <div className="text-4xl lg:text-5xl font-bold mb-2">{stat.number}</div>
                 <div className="text-blue-100">{stat.label}</div>
-              </motion.div>
+              </div>
             ))}
-          </motion.div>
+          </div>
         </div>
       </section>
 
       {/* Testimonials Section */}
       <section id="testimonials" className="py-20 lg:py-32">
         <div className="max-w-7xl mx-auto px-6">
-          <motion.div
+          <div
             className="text-center space-y-4 mb-16"
-            {...fadeInUp}
           >
             <h2 className="text-4xl lg:text-5xl font-bold text-gray-900">
               <span className="bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent">
@@ -453,20 +424,15 @@ export default function LandingPage() {
             <p className="text-xl text-gray-600">
               FlowCraft Proについてユーザーの皆様の声をお聞きください
             </p>
-          </motion.div>
+          </div>
 
-          <motion.div
+          <div
             className="grid md:grid-cols-3 gap-8"
-            variants={staggerContainer}
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true }}
           >
             {testimonials.map((testimonial, index) => (
-              <motion.div
+              <div
                 key={index}
                 className="glass rounded-2xl p-8 border border-white/20"
-                variants={fadeInUp}
               >
                 <div className="flex items-center space-x-1 mb-4">
                   {[...Array(testimonial.rating)].map((_, i) => (
@@ -485,18 +451,17 @@ export default function LandingPage() {
                     <div className="text-sm text-gray-600">{testimonial.role}</div>
                   </div>
                 </div>
-              </motion.div>
+              </div>
             ))}
-          </motion.div>
+          </div>
         </div>
       </section>
 
       {/* Pricing Section */}
       <section id="pricing" className="py-20 lg:py-32 bg-gray-50">
         <div className="max-w-7xl mx-auto px-6">
-          <motion.div
+          <div
             className="text-center space-y-4 mb-16"
-            {...fadeInUp}
           >
             <h2 className="text-4xl lg:text-5xl font-bold text-gray-900">
               シンプルで
@@ -507,24 +472,19 @@ export default function LandingPage() {
             <p className="text-xl text-gray-600">
               ニーズに合った最適なプランをお選びください。いつでもアップグレード・ダウングレード可能です。
             </p>
-          </motion.div>
+          </div>
 
-          <motion.div
+          <div
             className="grid md:grid-cols-2 lg:grid-cols-4 gap-8"
-            variants={staggerContainer}
-            initial="initial"
-            whileInView="animate"
-            viewport={{ once: true }}
           >
             {plans.map((plan, index) => (
-              <motion.div
+              <div
                 key={index}
                 className={`relative glass rounded-2xl p-8 border ${
                   plan.popular 
                     ? 'border-primary shadow-xl scale-105' 
                     : 'border-white/20'
                 }`}
-                variants={fadeInUp}
               >
                 {plan.popular && (
                   <div className="absolute -top-4 left-1/2 -translate-x-1/2">
@@ -562,18 +522,17 @@ export default function LandingPage() {
                 >
                   {plan.cta}
                 </Link>
-              </motion.div>
+              </div>
             ))}
-          </motion.div>
+          </div>
         </div>
       </section>
 
       {/* CTA Section */}
       <section className="py-20 lg:py-32 bg-gradient-to-r from-primary to-accent">
         <div className="max-w-4xl mx-auto px-6 text-center">
-          <motion.div
+          <div
             className="space-y-8 text-white"
-            {...fadeInUp}
           >
             <h2 className="text-4xl lg:text-5xl font-bold">
               生産性を変革する準備はできていますか？
@@ -596,7 +555,7 @@ export default function LandingPage() {
             <p className="text-sm text-blue-100">
               14日間無料トライアル • クレジットカード不要 • いつでもキャンセル可能
             </p>
-          </motion.div>
+          </div>
         </div>
       </section>
 
