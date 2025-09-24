@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useTaskStore } from '@/lib/store';
 import { format, isSameDay, startOfMonth, endOfMonth, startOfWeek, endOfWeek, addDays, addMonths, subMonths, isToday, isSameMonth } from 'date-fns';
+import { ja } from 'date-fns/locale';
 import { Calendar, ChevronLeft, ChevronRight, Clock, MapPin, X, CheckCircle, Flag } from 'lucide-react';
 
 export default function CalendarView() {
@@ -215,7 +216,7 @@ export default function CalendarView() {
             {/* モーダルヘッダー */}
             <div className="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
               <h3 className="text-xl font-bold text-gray-900">
-                {format(selectedDate, 'yyyy年M月d日(E)', { locale: { localize: { day: (n) => ['日', '月', '火', '水', '木', '金', '土'][n] } } })}
+                {format(selectedDate, 'yyyy年M月d日(E)', { locale: ja })}
               </h3>
               <button
                 onClick={() => setSelectedDate(null)}
