@@ -13,53 +13,72 @@ const isProtectedRoute = createRouteMatcher([
 
 export default clerkMiddleware(async (auth, request: NextRequest) => {
   // 保護されたルートへのアクセス時は認証チェック
+  // ただし、Clerkが設定されていない場合はスキップ（無限ループ防止）
   if (isProtectedRoute(request)) {
-    const { userId } = await auth();
-    if (!userId) {
-      const signInUrl = new URL('/sign-in', request.url);
-      return NextResponse.redirect(signInUrl);
+    // 環境変数を直接チェック（isClerkConfiguredを使うとここでもループの可能性）
+    const hasClerkKeys = process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY && process.env.CLERK_SECRET_KEY;
+    
+    if (hasClerkKeys) {
+      const { userId } = await auth();
+      if (!userId) {
+        const signInUrl = new URL('/sign-in', request.url);
+        return NextResponse.redirect(signInUrl);
+      }
     }
+  }
+
+  // 開発環境では一部のセキュリティチェックをスキップ
+  const isDevelopment = process.env.NODE_ENV === 'development';
+  const isDevAPI = request.nextUrl.pathname.startsWith('/api/dev/');
+  
+  // 開発用APIは全てのセキュリティチェックをスキップ
+  if (isDevelopment && isDevAPI) {
+    const response = NextResponse.next();
+    return response;
   }
 
   const { ip } = extractSecurityInfo(request);
 
-  // ブロックされたIPをチェック
-  if (securityMonitor.isIPBlocked(ip)) {
-    logSecurityEvent(
-      request,
-      SecurityEventType.UNAUTHORIZED_ACCESS,
-      'Request from blocked IP address',
-      'critical',
-      true
-    );
-    
-    return new Response('Access Denied', {
-      status: 403,
-      headers: { 'Content-Type': 'text/plain' }
-    });
-  }
+  // 開発環境では疑わしいリクエストチェックをスキップ
+  if (!isDevelopment) {
+    // ブロックされたIPをチェック
+    if (securityMonitor.isIPBlocked(ip)) {
+      logSecurityEvent(
+        request,
+        SecurityEventType.UNAUTHORIZED_ACCESS,
+        'Request from blocked IP address',
+        'critical',
+        true
+      );
+      
+      return new Response('Access Denied', {
+        status: 403,
+        headers: { 'Content-Type': 'text/plain' }
+      });
+    }
 
-  // 疑わしいリクエストをチェック
-  const suspiciousCheck = securityMonitor.isSuspiciousRequest(request);
-  if (suspiciousCheck.suspicious) {
-    const eventType = suspiciousCheck.reasons.includes('SQL injection') ? 
-      SecurityEventType.SQL_INJECTION_ATTEMPT :
-      suspiciousCheck.reasons.includes('XSS') ?
-      SecurityEventType.XSS_ATTEMPT :
-      SecurityEventType.SUSPICIOUS_REQUEST;
+    // 疑わしいリクエストをチェック
+    const suspiciousCheck = securityMonitor.isSuspiciousRequest(request);
+    if (suspiciousCheck.suspicious) {
+      const eventType = suspiciousCheck.reasons.includes('SQL injection') ? 
+        SecurityEventType.SQL_INJECTION_ATTEMPT :
+        suspiciousCheck.reasons.includes('XSS') ?
+        SecurityEventType.XSS_ATTEMPT :
+        SecurityEventType.SUSPICIOUS_REQUEST;
 
-    logSecurityEvent(
-      request,
-      eventType,
-      `Suspicious request: ${suspiciousCheck.reasons.join(', ')}`,
-      'high',
-      true
-    );
+      logSecurityEvent(
+        request,
+        eventType,
+        `Suspicious request: ${suspiciousCheck.reasons.join(', ')}`,
+        'high',
+        true
+      );
 
-    return new Response('Suspicious Request Blocked', {
-      status: 403,
-      headers: { 'Content-Type': 'text/plain' }
-    });
+      return new Response('Suspicious Request Blocked', {
+        status: 403,
+        headers: { 'Content-Type': 'text/plain' }
+      });
+    }
   }
 
   const response = NextResponse.next();

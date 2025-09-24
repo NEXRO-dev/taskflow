@@ -64,12 +64,25 @@ class RateLimiter {
       }
     });
   }
+
+  // 開発用: 特定のIPのレート制限をリセット
+  resetIP(ip: string) {
+    delete this.store[ip];
+  }
+
+  // 開発用: 全てのレート制限をリセット
+  resetAll() {
+    this.store = {};
+  }
 }
 
 // 異なる用途に応じたレート制限設定
-export const generalLimiter = new RateLimiter(60000, 100); // 1分間に100リクエスト
-export const authLimiter = new RateLimiter(900000, 5); // 15分間に5回（ログイン試行）
-export const apiLimiter = new RateLimiter(60000, 50); // API用: 1分間に50リクエスト
+// 開発環境では制限を緩和
+const isDevelopment = process.env.NODE_ENV === 'development';
+
+export const generalLimiter = new RateLimiter(60000, isDevelopment ? 1000 : 100); // 開発時: 1分間に1000リクエスト、本番: 100リクエスト
+export const authLimiter = new RateLimiter(900000, isDevelopment ? 50 : 5); // 開発時: 15分間に50回、本番: 5回
+export const apiLimiter = new RateLimiter(60000, isDevelopment ? 500 : 50); // 開発時: 1分間に500リクエスト、本番: 50リクエスト
 
 // リクエストからIPアドレスを取得
 export function getClientIP(request: NextRequest): string {
@@ -116,6 +129,14 @@ export async function withRateLimit(
   }
 
   return { success: true };
+}
+
+// 開発用: Rate Limitをリセットする関数
+export function resetRateLimits() {
+  generalLimiter.resetAll();
+  authLimiter.resetAll();
+  apiLimiter.resetAll();
+  console.log('Rate limits reset for development');
 }
 
 // 定期クリーンアップを設定
