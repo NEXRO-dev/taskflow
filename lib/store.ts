@@ -43,13 +43,23 @@ interface TaskStore {
   currentView: 'dashboard' | 'list' | 'kanban' | 'calendar' | 'projects' | 'analytics' | 'goals' | 'team' | 'settings';
   isDarkMode: boolean;
   currentUserId: string | null;
-  addTask: (task: Omit<Task, 'id' | 'createdAt' | 'xpValue' | 'userId'>) => void;
-  addEvent: (event: Omit<Task, 'id' | 'createdAt' | 'xpValue' | 'userId' | 'completed' | 'subtasks'>) => void;
-  updateTask: (id: string, updates: Partial<Task>) => void;
-  deleteTask: (id: string) => void;
-  toggleTask: (id: string) => void;
-  toggleSubtask: (taskId: string, subtaskId: string) => void;
-  addSubtask: (taskId: string, title: string) => void;
+  isLoading: boolean;
+  lastSynced: Date | null;
+  
+  // Client-side actions
+  addTask: (task: Omit<Task, 'id' | 'createdAt' | 'xpValue' | 'userId'>) => Promise<void>;
+  addEvent: (event: Omit<Task, 'id' | 'createdAt' | 'xpValue' | 'userId' | 'completed' | 'subtasks'>) => Promise<void>;
+  updateTask: (id: string, updates: Partial<Task>) => Promise<void>;
+  deleteTask: (id: string) => Promise<void>;
+  toggleTask: (id: string) => Promise<void>;
+  toggleSubtask: (taskId: string, subtaskId: string) => Promise<void>;
+  addSubtask: (taskId: string, title: string) => Promise<void>;
+  
+  // Server sync actions
+  syncFromServer: () => Promise<void>;
+  setTasks: (tasks: Task[]) => void;
+  
+  // Local-only actions
   addXP: (amount: number) => void;
   setView: (view: 'dashboard' | 'list' | 'kanban' | 'calendar' | 'projects' | 'analytics' | 'goals' | 'team' | 'settings') => void;
   generateSubtasks: (taskTitle: string) => string[];
@@ -59,6 +69,23 @@ interface TaskStore {
   getUserTasks: () => Task[];
   getUserEvents: () => Task[];
   getAllItems: () => Task[];
+}
+
+// API関数
+async function apiCall(url: string, options: RequestInit = {}) {
+  const response = await fetch(url, {
+    headers: {
+      'Content-Type': 'application/json',
+      ...options.headers,
+    },
+    ...options,
+  });
+  
+  if (!response.ok) {
+    throw new Error(`API call failed: ${response.statusText}`);
+  }
+  
+  return response.json();
 }
 
 export const useTaskStore = create<TaskStore>()(
@@ -75,137 +102,205 @@ export const useTaskStore = create<TaskStore>()(
       currentView: 'dashboard',
       isDarkMode: false,
       currentUserId: null,
+      isLoading: false,
+      lastSynced: null,
 
-      addTask: (taskData) => {
+      // サーバーからデータを同期
+      syncFromServer: async () => {
+        const { currentUserId } = get();
+        if (!currentUserId) {
+          console.warn('ユーザーIDが設定されていません');
+          set({ isLoading: false });
+          return;
+        }
+
+        try {
+          set({ isLoading: true });
+          console.log('Syncing from server...');
+          const data = await apiCall('/api/tasks');
+          console.log('Server response:', data);
+          
+          if (data && data.tasks) {
+            const serverTasks = data.tasks.map((task: any) => ({
+              ...task,
+              dueDate: task.dueDate ? new Date(task.dueDate) : undefined,
+              endDate: task.endDate ? new Date(task.endDate) : undefined,
+              createdAt: new Date(task.createdAt),
+            }));
+            
+            set({ 
+              tasks: serverTasks,
+              lastSynced: new Date(),
+              isLoading: false 
+            });
+            console.log('Sync completed, tasks loaded:', serverTasks.length);
+          } else {
+            console.warn('Invalid server response:', data);
+            set({ isLoading: false });
+          }
+        } catch (error) {
+          console.error('サーバー同期に失敗しました:', error);
+          set({ isLoading: false });
+        }
+      },
+
+      // タスクリストを設定（サーバーからの同期用）
+      setTasks: (tasks) => {
+        set({ tasks });
+      },
+
+      addTask: async (taskData) => {
         const { currentUserId } = get();
         if (!currentUserId) {
           console.error('ユーザーIDが設定されていません');
           return;
         }
         
-        console.log('Store addTask called with:', taskData);
-        const newTask: Task = {
-          ...taskData,
-          id: crypto.randomUUID(),
-          createdAt: new Date(),
-          xpValue: taskData.priority === 'high' ? 30 : taskData.priority === 'medium' ? 20 : 10,
-          userId: currentUserId,
-          type: taskData.type || 'task', // デフォルトはタスク
-        };
-        console.log('Created new task:', newTask);
-        set((state) => {
-          const newState = {
-            tasks: [...state.tasks, newTask]
-          };
-          console.log('Updated state, total tasks:', newState.tasks.length);
-          return newState;
-        });
+        try {
+          set({ isLoading: true });
+          
+          const newTask = {
+            ...taskData,
+            userId: currentUserId,
+            xpValue: taskData.priority === 'high' ? 30 : taskData.priority === 'medium' ? 20 : 10,
+             type: 'task' as const,
+             completed: false,
+             subtasks: [],
+             id: `task_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+           };
+
+          const result = await apiCall('/api/tasks', {
+            method: 'POST',
+            body: JSON.stringify(newTask),
+          });
+          
+          // 成功したらサーバーから最新データを同期
+          await get().syncFromServer();
+        } catch (error) {
+          console.error('タスク作成に失敗しました:', error);
+          set({ isLoading: false });
+        }
       },
 
-      addEvent: (eventData) => {
+      addEvent: async (eventData) => {
         const { currentUserId } = get();
         if (!currentUserId) {
           console.error('ユーザーIDが設定されていません');
           return;
         }
-        
-        console.log('Store addEvent called with:', eventData);
-        const newEvent: Task = {
-          ...eventData,
-          id: crypto.randomUUID(),
-          createdAt: new Date(),
-          xpValue: 0, // 予定はXPなし
-          userId: currentUserId,
-          type: 'event',
-          completed: false, // 予定は完了概念なし（参加/不参加）
-          subtasks: [], // 予定にはサブタスクなし
-        };
-        console.log('Created new event:', newEvent);
-        set((state) => {
-          const newState = {
-            tasks: [...state.tasks, newEvent]
-          };
-          console.log('Updated state, total items:', newState.tasks.length);
-          return newState;
-        });
+
+        try {
+          set({ isLoading: true });
+          
+          const newEvent = {
+            ...eventData,
+            userId: currentUserId,
+            xpValue: 0,
+             type: 'event' as const,
+             completed: false,
+             subtasks: [],
+             id: `event_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+           };
+
+          const result = await apiCall('/api/tasks', {
+            method: 'POST',
+            body: JSON.stringify(newEvent),
+          });
+          
+          // 成功したらサーバーから最新データを同期
+          await get().syncFromServer();
+        } catch (error) {
+          console.error('予定作成に失敗しました:', error);
+          set({ isLoading: false });
+        }
       },
 
-      updateTask: (id, updates) => {
-        set((state) => ({
-          tasks: state.tasks.map(task =>
-            task.id === id ? { ...task, ...updates } : task
-          )
-        }));
+      updateTask: async (id, updates) => {
+        try {
+          set({ isLoading: true });
+          
+          await apiCall(`/api/tasks/${id}`, {
+            method: 'PUT',
+            body: JSON.stringify(updates),
+          });
+          
+          // 成功したらサーバーから最新データを同期
+          await get().syncFromServer();
+        } catch (error) {
+          console.error('タスク更新に失敗しました:', error);
+          set({ isLoading: false });
+        }
       },
 
-      deleteTask: (id) => {
-        set((state) => ({
-          tasks: state.tasks.filter(task => task.id !== id)
-        }));
+      deleteTask: async (id) => {
+        try {
+          set({ isLoading: true });
+          
+          await apiCall(`/api/tasks/${id}`, {
+            method: 'DELETE',
+          });
+          
+          // 成功したらサーバーから最新データを同期
+          await get().syncFromServer();
+        } catch (error) {
+          console.error('タスク削除に失敗しました:', error);
+          set({ isLoading: false });
+        }
       },
 
-      toggleTask: (id) => {
-        const task = get().tasks.find(t => t.id === id);
+      toggleTask: async (id) => {
+        const { tasks } = get();
+        const task = tasks.find(t => t.id === id);
         if (!task) return;
 
-        const isCompleting = !task.completed;
-        
-        set((state) => ({
-          tasks: state.tasks.map(t =>
-            t.id === id ? { ...t, completed: !t.completed } : t
-          )
-        }));
+        await get().updateTask(id, { completed: !task.completed });
+      },
 
-        if (isCompleting) {
-          get().addXP(task.xpValue);
+      toggleSubtask: async (taskId, subtaskId) => {
+        try {
+          const { tasks } = get();
+          const task = tasks.find(t => t.id === taskId);
+          if (!task) return;
+
+          const subtask = task.subtasks.find(s => s.id === subtaskId);
+          if (!subtask) return;
+
+          await apiCall(`/api/subtasks/${subtaskId}`, {
+            method: 'PUT',
+            body: JSON.stringify({ completed: !subtask.completed }),
+          });
+          
+          // 成功したらサーバーから最新データを同期
+          await get().syncFromServer();
+        } catch (error) {
+          console.error('サブタスク更新に失敗しました:', error);
         }
       },
 
-      toggleSubtask: (taskId, subtaskId) => {
-        set((state) => ({
-          tasks: state.tasks.map(task =>
-            task.id === taskId
-              ? {
-                  ...task,
-                  subtasks: task.subtasks.map(subtask =>
-                    subtask.id === subtaskId
-                      ? { ...subtask, completed: !subtask.completed }
-                      : subtask
-                  )
-                }
-              : task
-          )
-        }));
+      addSubtask: async (taskId, title) => {
+        try {
+          await apiCall('/api/subtasks', {
+            method: 'POST',
+            body: JSON.stringify({ taskId, title }),
+          });
+          
+          // 成功したらサーバーから最新データを同期
+          await get().syncFromServer();
+        } catch (error) {
+          console.error('サブタスク作成に失敗しました:', error);
+        }
       },
 
-      addSubtask: (taskId, title) => {
-        const newSubtask: Subtask = {
-          id: crypto.randomUUID(),
-          title,
-          completed: false
-        };
-        
-        set((state) => ({
-          tasks: state.tasks.map(task =>
-            task.id === taskId
-              ? { ...task, subtasks: [...task.subtasks, newSubtask] }
-              : task
-          )
-        }));
-      },
-
+      // ローカルのみの操作
       addXP: (amount) => {
         set((state) => {
-          const newXP = state.userStats.totalXP + amount;
-          const newLevel = Math.floor(newXP / 100) + 1;
-          const newCompletedTasks = state.userStats.completedTasks + 1;
-          
+          const newTotalXP = state.userStats.totalXP + amount;
+          const newLevel = Math.floor(newTotalXP / 100) + 1;
           return {
             userStats: {
               ...state.userStats,
-              totalXP: newXP,
-              level: newLevel,
-              completedTasks: newCompletedTasks
+              totalXP: newTotalXP,
+              level: newLevel
             }
           };
         });
@@ -215,59 +310,22 @@ export const useTaskStore = create<TaskStore>()(
         set({ currentView: view });
       },
 
-      generateSubtasks: (taskTitle: string) => {
-        const lowerTitle = taskTitle.toLowerCase();
-        
-        // Simple AI simulation for subtask generation
-        if (lowerTitle.includes('会議') || lowerTitle.includes('ミーティング') || lowerTitle.includes('打ち合わせ') || lowerTitle.includes('meeting') || lowerTitle.includes('call')) {
-          return [
-            'アジェンダの準備',
-            'ビデオ通話のセットアップ',
-            'カレンダー招待の送信',
-            'プレゼン資料の準備',
-            'フォローアップメモの送信'
-          ];
-        }
-        
-        if (lowerTitle.includes('プロジェクト') || lowerTitle.includes('開発') || lowerTitle.includes('project') || lowerTitle.includes('develop')) {
-          return [
-            'プロジェクト構造の計画',
-            '初期ワイヤーフレームの作成',
-            '開発環境のセットアップ',
-            'コア機能の実装',
-            'テスト・デバッグ',
-            '本番環境へのデプロイ'
-          ];
-        }
-        
-        if (lowerTitle.includes('勉強') || lowerTitle.includes('学習') || lowerTitle.includes('study') || lowerTitle.includes('learn')) {
-          return [
-            '学習資料の収集',
-            '学習スケジュールの作成',
-            'ノート作成',
-            '練習問題の実施',
-            '復習とまとめ'
-          ];
-        }
-        
-        return [
-          '小さなステップに分解',
-          '要件の調査',
-          'メインタスクの実行',
-          'レビューと仕上げ'
+      generateSubtasks: (taskTitle) => {
+        const suggestions = [
+          `${taskTitle}の計画を立てる`,
+          `必要な資料を集める`,
+          `進捗を確認する`,
+          `完了を報告する`
         ];
+        return suggestions;
       },
 
       clearAllTasks: () => {
-        set(() => ({
-          tasks: []
-        }));
+        set({ tasks: [] });
       },
 
       toggleDarkMode: () => {
-        set((state) => ({
-          isDarkMode: !state.isDarkMode
-        }));
+        set((state) => ({ isDarkMode: !state.isDarkMode }));
       },
 
       setCurrentUserId: (userId) => {
@@ -291,6 +349,13 @@ export const useTaskStore = create<TaskStore>()(
     }),
     {
       name: 'taskflow-storage',
+      partialize: (state) => ({
+        userStats: state.userStats,
+        currentView: state.currentView,
+        isDarkMode: state.isDarkMode,
+        currentUserId: state.currentUserId,
+        // タスクデータはサーバーから同期するため、ローカルには保存しない
+      }),
     }
   )
 );

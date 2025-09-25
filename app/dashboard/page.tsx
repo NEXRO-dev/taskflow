@@ -12,14 +12,29 @@ import TaskList from '@/components/TaskList';
 import CalendarView from '@/components/CalendarView';
 import AddTaskForm from '@/components/AddTaskForm';
 import SettingsView from '@/components/SettingsView';
+import useAutoSync from '@/hooks/useAutoSync';
+import useMigration from '@/hooks/useMigration';
+import MigrationModal from '@/components/MigrationModal';
 
 function DashboardContent() {
-  const { currentView, isDarkMode, setView, setCurrentUserId } = useTaskStore();
+  const { currentView, isDarkMode, setView, setCurrentUserId, isLoading } = useTaskStore();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
   const { isSignedIn, isLoaded, user } = useUser();
   const router = useRouter();
   const searchParams = useSearchParams();
+  
+  // 自動同期フックを使用
+  useAutoSync();
+  
+  // マイグレーション機能を使用
+  const { 
+    migrationStatus, 
+    migrationData, 
+    migrateData, 
+    skipMigration, 
+    hasMigrationData 
+  } = useMigration();
 
   useEffect(() => {
     const enabled = isClerkConfigured();
@@ -202,12 +217,30 @@ function DashboardContent() {
         
         <main className="p-6 pb-24">
           <div className="opacity-100">
+            {isLoading && (
+              <div className="fixed top-4 right-4 z-50 bg-white shadow-lg rounded-lg p-3 border">
+                <div className="flex items-center space-x-2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600"></div>
+                  <span className="text-sm text-gray-600">同期中...</span>
+                </div>
+              </div>
+            )}
             {renderCurrentView()}
           </div>
         </main>
       </div>
 
       <AddTaskForm />
+      
+      {/* マイグレーションモーダル */}
+      <MigrationModal
+        isOpen={hasMigrationData && migrationStatus === 'idle'}
+        onClose={() => {}}
+        onMigrate={migrateData}
+        onSkip={skipMigration}
+        taskCount={migrationData.length}
+        isLoading={migrationStatus === 'migrating'}
+      />
     </div>
   );
 }
