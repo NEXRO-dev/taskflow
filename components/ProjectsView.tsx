@@ -47,7 +47,7 @@ function ProjectModal({ isOpen, onClose, project, onSave }: ProjectModalProps) {
     name: '',
     description: '',
     color: PROJECT_COLORS[0].class,
-    status: 'active' as const,
+    status: 'active' as 'active' | 'completed' | 'on_hold' | 'cancelled',
     startDate: '',
     endDate: '',
     teamMembers: [] as string[]
@@ -69,7 +69,7 @@ function ProjectModal({ isOpen, onClose, project, onSave }: ProjectModalProps) {
         name: '',
         description: '',
         color: PROJECT_COLORS[0].class,
-        status: 'active',
+        status: 'active' as 'active' | 'completed' | 'on_hold' | 'cancelled',
         startDate: '',
         endDate: '',
         teamMembers: []
@@ -168,7 +168,7 @@ function ProjectModal({ isOpen, onClose, project, onSave }: ProjectModalProps) {
               </label>
               <select
                 value={formData.status}
-                onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as any }))}
+                onChange={(e) => setFormData(prev => ({ ...prev, status: e.target.value as 'active' | 'completed' | 'on_hold' | 'cancelled' }))}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
               >
                 {PROJECT_STATUSES.map((status) => (

@@ -12,6 +12,8 @@ export interface SubscriptionStatus {
     maxTeamMembers: number;
     analyticsAccess: boolean;
     goalsAccess: boolean;
+    timeTrackingAccess: boolean;
+    advancedFiltersAccess: boolean;
     teamCollaboration: boolean;
     advancedReports: boolean;
     prioritySupport: boolean;

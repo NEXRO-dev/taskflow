@@ -96,8 +96,8 @@ export default function CalendarView() {
           <div className="flex items-center space-x-4">
             <Calendar className="h-6 w-6 text-blue-600" />
             <h1 className="text-2xl font-bold text-gray-900">カレンダー</h1>
-          </div>
-          
+        </div>
+
           <div className="flex items-center space-x-4">
             <button
               onClick={goToToday}
@@ -127,7 +127,7 @@ export default function CalendarView() {
             </div>
           </div>
         </div>
-      </div>
+                </div>
 
       {/* カレンダーグリッド */}
       <div className="flex-1 flex flex-col overflow-hidden">
@@ -150,9 +150,9 @@ export default function CalendarView() {
               const events = dayItems.filter(item => item.type === 'event');
               const tasks = dayItems.filter(item => item.type === 'task');
               const isCurrentMonth = isSameMonth(day, currentMonth);
-              
-              return (
-                            <div
+                
+                return (
+                <div
                               key={day.toISOString()}
                               className={`border-r border-b border-gray-200 last:border-r-0 p-2 cursor-pointer hover:bg-gray-50 transition-colors flex flex-col relative ${
                                 isToday(day) ? 'bg-blue-50' : !isCurrentMonth ? 'bg-gray-50' : ''
@@ -197,7 +197,7 @@ export default function CalendarView() {
                                       {!event.isAllDay && event.dueTime ? `${event.dueTime} ` : ''}
                                       {event.title}
                                     </div>
-                                  </div>
+                    </div>
                                 ))}
                     
                     {/* 下部の情報表示 */}
@@ -213,9 +213,9 @@ export default function CalendarView() {
                 </div>
               );
             })}
+            </div>
           </div>
         </div>
-      </div>
 
       {/* 選択された日付の詳細モーダル */}
       {selectedDate && (
@@ -232,7 +232,7 @@ export default function CalendarView() {
               >
                 <X className="h-5 w-5 text-gray-500" />
               </button>
-            </div>
+      </div>
 
             {/* モーダルコンテンツ */}
             <div className="p-6 overflow-y-auto max-h-[60vh]">
@@ -372,13 +372,13 @@ export default function CalendarView() {
                           ))
                         )}
                       </div>
-                    </div>
-                  </div>
+              </div>
+              </div>
                 );
               })()}
             </div>
           </div>
-        </div>
+      </div>
       )}
     </div>
   );
