@@ -268,7 +268,7 @@ function AnalyticsContent() {
 
 export default function AnalyticsView() {
   return (
-    <PremiumGate feature="analytics">
+    <PremiumGate featureName="analytics">
       <AnalyticsContent />
     </PremiumGate>
   );

@@ -389,7 +389,7 @@ function GoalsContent() {
 
 export default function GoalsView() {
   return (
-    <PremiumGate feature="goals">
+    <PremiumGate featureName="goals">
       <GoalsContent />
     </PremiumGate>
   );
