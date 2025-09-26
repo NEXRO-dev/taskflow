@@ -38,9 +38,9 @@ const navItems = [
   { icon: LayoutDashboard, label: 'ダッシュボード', href: '/dashboard', view: 'dashboard', plan: 'Free' },
   { icon: CheckSquare, label: 'タスク・予定', href: '/tasks', view: 'list', plan: 'Free' },
   { icon: Calendar, label: 'カレンダー', href: '/calendar', view: 'calendar', plan: 'Free' },
-  { icon: FolderOpen, label: 'プロジェクト', href: '/projects', view: 'projects', plan: 'Pro' },
   { icon: BarChart3, label: '分析', href: '/analytics', view: 'analytics', plan: 'Pro' },
   { icon: Target, label: '目標', href: '/goals', view: 'goals', plan: 'Pro' },
+  { icon: FolderOpen, label: 'プロジェクト', href: '/projects', view: 'projects', plan: 'Team' },
   { icon: Users, label: 'チーム', href: '/team', view: 'team', plan: 'Team' },
 ];
 
@@ -64,7 +64,7 @@ export default function Sidebar({ isOpen = true, onClose, onCollapseChange }: Si
     name: '',
     email: '',
     country_code: '+81',
-    plan: 'Free'
+    plan: 'Free' // 本番環境：全ユーザーをFreeプランに制限
   });
 
   // プランに基づいて機能を表示するかどうかを判定
@@ -82,7 +82,7 @@ export default function Sidebar({ isOpen = true, onClose, onCollapseChange }: Si
         name: user.fullName || user.firstName || 'ユーザー',
         email: user.primaryEmailAddress?.emailAddress || '',
         country_code: '+81',
-        plan: 'Free'
+        plan: 'Free' // 本番環境：全ユーザーをFreeプランに制限
       });
     }
   }, [user]);

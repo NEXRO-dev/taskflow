@@ -17,8 +17,12 @@ import {
   BookOpen,
   MessageCircle,
   Keyboard,
-  Mail
+  Mail,
+  X
 } from 'lucide-react';
+import { useSearch } from '@/hooks/useSearch';
+import { useTaskStore } from '@/lib/store';
+import SearchResults from './SearchResults';
 
 interface ModernHeaderProps {
   onMenuToggle?: () => void;
@@ -28,19 +32,63 @@ export default function ModernHeader({ onMenuToggle }: ModernHeaderProps) {
   const router = useRouter();
   const { user, isSignedIn } = useUser();
   const { signOut } = useClerk();
+  const { setView } = useTaskStore();
   const [showProfileMenu, setShowProfileMenu] = useState(false);
   const [showNotifications, setShowNotifications] = useState(false);
   const [showHelp, setShowHelp] = useState(false);
   const [helpScreen, setHelpScreen] = useState<string | null>(null);
+  const [showSearchResults, setShowSearchResults] = useState(false);
+  
+  // 検索機能
+  const {
+    query,
+    searchResults,
+    suggestions,
+    searchStats,
+    isSearching,
+    performSearch,
+    clearSearch,
+    setQuery,
+  } = useSearch();
   const [profile, setProfile] = useState({
     name: '田中太郎',
     email: 'tanaka@example.com',
     country_code: '+81',
-    plan: 'Free'
+    plan: 'Free' // 本番環境：全ユーザーをFreeプランに制限
   });
   const [notifications, setNotifications] = useState<any[]>([]);
   const [unreadCount, setUnreadCount] = useState(0);
   const [loadingNotifications, setLoadingNotifications] = useState(false);
+
+  // 検索結果のクリック処理
+  const handleSearchResultClick = (result: any) => {
+    if (result.type === 'task') {
+      setView('list');
+    } else if (result.type === 'event') {
+      setView('calendar'); // 予定はカレンダー画面に移動
+    } else if (result.type === 'project') {
+      setView('projects');
+    }
+    setShowSearchResults(false);
+    clearSearch();
+  };
+
+  // 検索入力の処理
+  const handleSearchInput = (value: string) => {
+    setQuery(value);
+    if (value.trim()) {
+      setShowSearchResults(true);
+      performSearch(value);
+    } else {
+      setShowSearchResults(false);
+    }
+  };
+
+  // 検索のクリア
+  const handleClearSearch = () => {
+    clearSearch();
+    setShowSearchResults(false);
+  };
 
   // キーボードショートカットの実装
   useEffect(() => {
@@ -57,8 +105,11 @@ export default function ModernHeader({ onMenuToggle }: ModernHeaderProps) {
             break;
           case 'k':
             event.preventDefault();
-            // 検索を開く（実装予定）
-            console.log('検索を開く');
+            // 検索フィールドにフォーカス
+            const searchInput = document.querySelector('input[placeholder*="検索"]') as HTMLInputElement;
+            if (searchInput) {
+              searchInput.focus();
+            }
             break;
           case 'd':
             event.preventDefault();
@@ -79,9 +130,11 @@ export default function ModernHeader({ onMenuToggle }: ModernHeaderProps) {
         }
       }
       
-      // Escapeキーでヘルプを閉じる
+      // Escapeキーでヘルプや検索を閉じる
       if (event.key === 'Escape') {
-        if (helpScreen) {
+        if (showSearchResults) {
+          setShowSearchResults(false);
+        } else if (helpScreen) {
           setHelpScreen(null);
         } else if (showHelp) {
           setShowHelp(false);
@@ -171,7 +224,7 @@ export default function ModernHeader({ onMenuToggle }: ModernHeaderProps) {
         name: user.fullName || user.firstName || 'ユーザー',
         email: user.primaryEmailAddress?.emailAddress || '',
         country_code: '+81',
-        plan: 'Free'
+        plan: 'Free' // 本番環境：全ユーザーをFreeプランに制限
       });
     }
   }, [user]);
@@ -452,6 +505,10 @@ export default function ModernHeader({ onMenuToggle }: ModernHeaderProps) {
       if (!target.closest('.notification-dropdown') && !target.closest('[data-notification-button]')) {
         setShowNotifications(false);
       }
+      // 検索結果のクリック外し処理
+      if (!target.closest('.search-container') && !target.closest('input[placeholder*="検索"]')) {
+        setShowSearchResults(false);
+      }
     };
 
     document.addEventListener('mousedown', handleClickOutside);
@@ -476,12 +533,37 @@ export default function ModernHeader({ onMenuToggle }: ModernHeaderProps) {
           
           {/* Search */}
           <div className="hidden md:flex items-center space-x-4">
-            <div className="relative">
+            <div className="relative search-container">
               <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
               <input
                 type="text"
                 placeholder="タスクやプロジェクトを検索..."
-                className="pl-10 pr-4 py-2 w-80 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
+                value={query}
+                onChange={(e) => handleSearchInput(e.target.value)}
+                onFocus={() => query.trim() && setShowSearchResults(true)}
+                className="pl-10 pr-10 py-2 w-80 bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
+              />
+              {query && (
+                <button
+                  onClick={handleClearSearch}
+                  className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              )}
+              {isSearching && (
+                <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
+                  <div className="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+                </div>
+              )}
+              
+              {/* 検索結果 */}
+              <SearchResults
+                results={searchResults}
+                onResultClick={handleSearchResultClick}
+                onClose={() => setShowSearchResults(false)}
+                isVisible={showSearchResults}
+                query={query}
               />
             </div>
           </div>
@@ -614,7 +696,7 @@ export default function ModernHeader({ onMenuToggle }: ModernHeaderProps) {
                 <p className="text-sm font-medium text-gray-900 truncate max-w-32" title={profile.name}>
                   {profile.name}
                 </p>
-                <p className="text-xs text-gray-500">{profile.plan || 'Free'} Plan</p>
+                <p className="text-xs text-gray-500">{profile.plan || 'Team'} Plan</p>
               </div>
               <ChevronDown className="h-4 w-4 text-gray-400" />
             </button>
@@ -712,12 +794,37 @@ export default function ModernHeader({ onMenuToggle }: ModernHeaderProps) {
 
       {/* Mobile Search */}
       <div className="md:hidden mt-4">
-        <div className="relative">
+        <div className="relative search-container">
           <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
           <input
             type="text"
             placeholder="検索..."
-            className="pl-10 pr-4 py-2 w-full bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
+            value={query}
+            onChange={(e) => handleSearchInput(e.target.value)}
+            onFocus={() => query.trim() && setShowSearchResults(true)}
+            className="pl-10 pr-10 py-2 w-full bg-gray-50 border border-gray-200 rounded-lg focus:bg-white focus:border-blue-500 focus:ring-2 focus:ring-blue-200 outline-none transition-all"
+          />
+          {query && (
+            <button
+              onClick={handleClearSearch}
+              className="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-400 hover:text-gray-600"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          )}
+          {isSearching && (
+            <div className="absolute right-8 top-1/2 transform -translate-y-1/2">
+              <div className="animate-spin h-4 w-4 border-2 border-blue-500 border-t-transparent rounded-full"></div>
+            </div>
+          )}
+          
+          {/* モバイル検索結果 */}
+          <SearchResults
+            results={searchResults}
+            onResultClick={handleSearchResultClick}
+            onClose={() => setShowSearchResults(false)}
+            isVisible={showSearchResults}
+            query={query}
           />
         </div>
       </div>

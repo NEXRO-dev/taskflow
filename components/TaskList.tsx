@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useTaskStore } from '@/lib/store';
 import TaskCard from './TaskCard';
 import { CheckCircle, Clock, AlertCircle, Calendar, List } from 'lucide-react';
+import { getTodayJST, formatDateToISO } from '@/lib/dateUtils';
 
 export default function TaskList() {
   const { getAllItems } = useTaskStore();
@@ -22,40 +23,34 @@ export default function TaskList() {
   
   const todayTasks = pendingTasks.filter(task => {
     if (!task.dueDate) return false;
-    const today = new Date();
-    const taskDate = new Date(task.dueDate);
-    return taskDate.toDateString() === today.toDateString();
+    const today = getTodayJST();
+    const taskDate = formatDateToISO(task.dueDate);
+    return taskDate === today;
   });
 
   const overdueTasks = pendingTasks.filter(task => {
     if (!task.dueDate) return false;
-    const today = new Date();
-    const taskDate = new Date(task.dueDate);
-    
-    // 今日の日付を正規化（時間を00:00:00に設定）
-    const todayNormalized = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const taskDateNormalized = new Date(taskDate.getFullYear(), taskDate.getMonth(), taskDate.getDate());
+    const today = getTodayJST();
+    const taskDate = formatDateToISO(task.dueDate);
     
     // 今日より前の日付のみを期限切れとする（今日は含まない）
-    return taskDateNormalized < todayNormalized && !task.completed;
+    return taskDate < today && !task.completed;
   });
 
   // 今日の予定
   const todayEvents = events.filter(event => {
     if (!event.dueDate) return false;
-    const today = new Date();
-    const eventDate = new Date(event.dueDate);
-    return eventDate.toDateString() === today.toDateString();
+    const today = getTodayJST();
+    const eventDate = formatDateToISO(event.dueDate);
+    return eventDate === today;
   });
 
   // 今後の予定
   const upcomingEvents = events.filter(event => {
     if (!event.dueDate) return false;
-    const today = new Date();
-    const eventDate = new Date(event.dueDate);
-    const todayNormalized = new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const eventDateNormalized = new Date(eventDate.getFullYear(), eventDate.getMonth(), eventDate.getDate());
-    return eventDateNormalized >= todayNormalized;
+    const today = getTodayJST();
+    const eventDate = formatDateToISO(event.dueDate);
+    return eventDate >= today;
   });
 
   if (items.length === 0) {

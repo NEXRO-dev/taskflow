@@ -12,6 +12,10 @@ import TaskList from '@/components/TaskList';
 import CalendarView from '@/components/CalendarView';
 import AddTaskForm from '@/components/AddTaskForm';
 import SettingsView from '@/components/SettingsView';
+import ProjectsView from '@/components/ProjectsView';
+import AnalyticsView from '@/components/AnalyticsView';
+import GoalsView from '@/components/GoalsView';
+import TeamView from '@/components/TeamView';
 import useAutoSync from '@/hooks/useAutoSync';
 import useMigration from '@/hooks/useMigration';
 import MigrationModal from '@/components/MigrationModal';
@@ -170,33 +174,13 @@ function DashboardContent() {
       case 'calendar':
         return <CalendarView />;
       case 'projects':
-        return (
-          <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">プロジェクト管理</h2>
-            <p className="text-gray-600">プロジェクト機能は開発中です</p>
-          </div>
-        );
+        return <ProjectsView />;
       case 'analytics':
-        return (
-          <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">分析</h2>
-            <p className="text-gray-600">分析機能は開発中です</p>
-          </div>
-        );
+        return <AnalyticsView />;
       case 'goals':
-        return (
-          <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">目標設定</h2>
-            <p className="text-gray-600">目標設定機能は開発中です</p>
-          </div>
-        );
+        return <GoalsView />;
       case 'team':
-        return (
-          <div className="bg-white rounded-xl border border-gray-200 p-8 text-center">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">チーム管理</h2>
-            <p className="text-gray-600">チーム管理機能は開発中です</p>
-          </div>
-        );
+        return <TeamView />;
       case 'settings':
         return <SettingsView />;
       default:

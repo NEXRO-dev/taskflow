@@ -114,9 +114,8 @@ export default function TaskCard({ task, index }: TaskCardProps) {
                   <Clock className="h-3 w-3" />
                   <span>
                     {format(task.dueDate, 'MMM d')}
-                    {task.type === 'event' && task.isAllDay 
-                      ? ' (終日)' 
-                      : task.dueTime && ` ${task.dueTime}`}
+                    {task.type === 'event' && !task.isAllDay && task.dueTime && ` ${task.dueTime}`}
+                    {task.type === 'task' && task.dueTime && ` ${task.dueTime}`}
                     {task.type === 'event' && task.endTime && !task.isAllDay && 
                       ` - ${task.endTime}`}
                   </span>

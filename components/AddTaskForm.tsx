@@ -6,9 +6,19 @@ import { useTaskStore } from '@/lib/store';
 import { Plus, X, Calendar, Flag, Mic, MicOff } from 'lucide-react';
 import TimePickerCustom from './TimePickerCustom';
 import DatePickerCustom from './DatePickerCustom';
+import { 
+  getTodayJST, 
+  getTomorrowJST, 
+  getDateAfterDaysJST, 
+  getNextWeekdayJST,
+  createJSTDateFromString,
+  createJSTDateTimeFromString,
+  formatDateToISO,
+  debugTimeInfo 
+} from '@/lib/dateUtils';
 
 export default function AddTaskForm() {
-  const { addTask, addEvent, currentView } = useTaskStore();
+  const { addTask, addEvent, currentView, projects } = useTaskStore();
   const [isOpen, setIsOpen] = useState(false);
   const [step, setStep] = useState(1);
   const [itemType, setItemType] = useState<'task' | 'event'>('task');
@@ -21,8 +31,10 @@ export default function AddTaskForm() {
   const [endTime, setEndTime] = useState('');
   const [location, setLocation] = useState('');
   const [isAllDay, setIsAllDay] = useState(false);
+  const [showEndTime, setShowEndTime] = useState(false); // 終了時間表示の制御
   const [color, setColor] = useState<'blue' | 'green' | 'red' | 'yellow' | 'orange' | 'purple' | 'pink' | 'indigo' | 'gray'>('blue');
   const [reminder, setReminder] = useState<number | undefined>(undefined);
+  const [project, setProject] = useState<string>('');
   const [isListening, setIsListening] = useState(false);
 
   // Voice recognition
@@ -62,14 +74,15 @@ export default function AddTaskForm() {
       const dateMatch = transcript.match(dateRegex);
       if (dateMatch) {
         const dateStr = dateMatch[1];
-        const today = new Date();
         
         if (dateStr === '明日') {
-          const tomorrow = new Date(today);
-          tomorrow.setDate(tomorrow.getDate() + 1);
-          parsedDate = tomorrow.toISOString().split('T')[0];
+          parsedDate = getTomorrowJST();
         } else if (dateStr === '今日') {
-          parsedDate = today.toISOString().split('T')[0];
+          parsedDate = getTodayJST();
+        } else if (dateStr === '来週') {
+          parsedDate = getDateAfterDaysJST(7);
+        } else if (dateStr.includes('曜日')) {
+          parsedDate = getNextWeekdayJST(dateStr);
         }
         
         // Remove date from title
@@ -138,9 +151,10 @@ export default function AddTaskForm() {
         description,
         completed: false,
         priority,
-        dueDate: dueDate ? new Date(dueDate) : undefined,
+        dueDate: dueDate ? createJSTDateFromString(dueDate) : undefined,
         dueTime: dueTime || undefined,
         reminder: reminder || undefined,
+        project: project || undefined,
         subtasks: [],
         type: 'task'
       });
@@ -161,10 +175,10 @@ export default function AddTaskForm() {
         title,
         description,
         priority,
-        dueDate: dueDate ? new Date(dueDate) : undefined,
+        dueDate: dueDate ? createJSTDateFromString(dueDate) : undefined,
         dueTime: isAllDay ? undefined : (dueTime || undefined),
-        endDate: endDate ? new Date(endDate) : (dueDate ? new Date(dueDate) : undefined),
-        endTime: isAllDay ? undefined : (endTime || undefined),
+        endDate: showEndTime && endDate ? createJSTDateFromString(endDate) : (dueDate ? createJSTDateFromString(dueDate) : undefined),
+        endTime: isAllDay || !showEndTime ? undefined : (endTime || undefined),
         location: location || undefined,
         isAllDay: isAllDay,
         color: color,
@@ -189,8 +203,10 @@ export default function AddTaskForm() {
     setEndTime('');
     setLocation('');
     setIsAllDay(false);
+    setShowEndTime(false); // 終了時間表示も初期化
     setColor('blue');
     setReminder(undefined);
+    setProject('');
     setItemType('task');
     setStep(1);
     setIsOpen(false);
@@ -416,6 +432,28 @@ export default function AddTaskForm() {
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900 mb-4">設定</h3>
                         <div className="space-y-6">
+                          {/* プロジェクト（タスクのみ・Teamプランのみ） */}
+                          {itemType === 'task' && projects.length > 0 && (
+                            <div>
+                              <label className="text-sm font-medium text-gray-700 mb-2 block">
+                                プロジェクト
+                                <span className="text-xs text-gray-500 ml-2">(Team プラン)</span>
+                              </label>
+                              <select
+                                value={project}
+                                onChange={(e) => setProject(e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+                              >
+                                <option value="">プロジェクトを選択（任意）</option>
+                                {projects.filter(p => p.status === 'active').map((proj) => (
+                                  <option key={proj.id} value={proj.id}>
+                                    {proj.name}
+                                  </option>
+                                ))}
+                              </select>
+                            </div>
+                          )}
+
                           {/* 優先度（タスクのみ） */}
                           {itemType === 'task' && (
                             <div>
@@ -439,21 +477,34 @@ export default function AddTaskForm() {
                             </div>
                           )}
 
-                          {/* 終日予定（予定のみ） */}
+                          {/* 終日予定設定（予定のみ） */}
                           {itemType === 'event' && (
-                            <div>
-                              <label className="flex items-center space-x-3 p-3 rounded-lg border border-gray-200 hover:bg-gray-50 cursor-pointer">
-                                <input
-                                  type="checkbox"
-                                  checked={isAllDay}
-                                  onChange={(e) => setIsAllDay(e.target.checked)}
-                                  className="rounded border-gray-300"
+                            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg border border-gray-200">
+                              <div className="flex items-center space-x-2">
+                                <div className="text-sm text-gray-700">終日予定</div>
+                                <div className="text-xs text-gray-500">時間指定なし</div>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setIsAllDay(!isAllDay);
+                                  if (!isAllDay) {
+                                    setShowEndTime(false);
+                                    setEndDate('');
+                                    setEndTime('');
+                                    setDueTime('');
+                                  }
+                                }}
+                                className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 ${
+                                  isAllDay ? 'bg-blue-600' : 'bg-gray-300'
+                                }`}
+                              >
+                                <span
+                                  className={`inline-block h-3 w-3 transform rounded-full bg-white transition-transform duration-200 ease-in-out ${
+                                    isAllDay ? 'translate-x-5' : 'translate-x-1'
+                                  }`}
                                 />
-                                <div>
-                                  <div className="text-sm font-medium text-gray-900">終日予定</div>
-                                  <div className="text-xs text-gray-500">時間指定なしの予定</div>
-                                </div>
-                              </label>
+                              </button>
                             </div>
                           )}
                           
@@ -470,9 +521,7 @@ export default function AddTaskForm() {
                                   { label: '明日', days: 1 },
                                   { label: '来週', days: 7 }
                                 ].map(({ label, days }) => {
-                                  const date = new Date();
-                                  date.setDate(date.getDate() + days);
-                                  const dateString = date.toISOString().split('T')[0];
+                                  const dateString = getDateAfterDaysJST(days);
                                   
                                   return (
                                     <button
@@ -502,16 +551,57 @@ export default function AddTaskForm() {
 
                           {/* 開始時間 */}
                           {dueDate && !isAllDay && (
-                            <TimePickerCustom
-                              value={dueTime}
-                              onChange={setDueTime}
-                              label={itemType === 'task' ? '時間（任意）' : '開始時間'}
-                              placeholder="時間を選択してください"
-                            />
+                            <div className="space-y-2">
+                              <div className="flex items-center justify-between">
+                                <label className="text-sm font-medium text-gray-700">
+                                  {itemType === 'task' ? '時間（任意）' : '開始時間'}
+                                </label>
+                                {/* 終了時間設定トグル（予定の場合のみ） */}
+                                {itemType === 'event' && (
+                                  <div className="flex items-center space-x-2">
+                                    <span className="text-xs text-gray-500">
+                                      {showEndTime ? '終了時間を設定中' : '終了時間も設定'}
+                                    </span>
+                                    <button
+                                      type="button"
+                                      onClick={() => {
+                                        setShowEndTime(!showEndTime);
+                                        if (showEndTime) {
+                                          setEndDate('');
+                                          setEndTime('');
+                                        }
+                                      }}
+                                      className={`relative inline-flex h-4 w-7 items-center rounded-full transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-1 ${
+                                        showEndTime ? 'bg-purple-600' : 'bg-gray-300'
+                                      }`}
+                                    >
+                                      <span
+                                        className={`inline-block h-2.5 w-2.5 transform rounded-full bg-white transition-transform duration-200 ease-in-out ${
+                                          showEndTime ? 'translate-x-3.5' : 'translate-x-0.5'
+                                        }`}
+                                      />
+                                    </button>
+                                  </div>
+                                )}
+                              </div>
+                              <input
+                                type="time"
+                                value={dueTime}
+                                onChange={(e) => setDueTime(e.target.value)}
+                                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm"
+                                placeholder="時間を選択してください"
+                              />
+                              {/* 終了時間が無効な場合の説明 */}
+                              {itemType === 'event' && !showEndTime && (
+                                <p className="text-xs text-gray-500 mt-1">
+                                  📍 この時間から1時間の予定として作成されます
+                                </p>
+                              )}
+                            </div>
                           )}
 
-                          {/* 終了日（予定のみ） */}
-                          {itemType === 'event' && dueDate && (
+                          {/* 終了日（予定のみ、終了時間設定が有効な場合） */}
+                          {itemType === 'event' && dueDate && showEndTime && (
                             <DatePickerCustom
                               value={endDate || dueDate}
                               onChange={setEndDate}
@@ -521,8 +611,8 @@ export default function AddTaskForm() {
                             />
                           )}
 
-                          {/* 終了時間（予定のみ） */}
-                          {itemType === 'event' && dueDate && !isAllDay && (
+                          {/* 終了時間（予定のみ、終了時間設定が有効かつ終日でない場合） */}
+                          {itemType === 'event' && dueDate && showEndTime && !isAllDay && (
                             <TimePickerCustom
                               value={endTime}
                               onChange={setEndTime}

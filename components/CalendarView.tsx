@@ -58,9 +58,17 @@ export default function CalendarView() {
 
   // 指定日のアイテムを取得
   const getItemsForDate = (date: Date) => {
-    return items.filter(item => 
-      item.dueDate && isSameDay(new Date(item.dueDate), date)
-    );
+    const targetDateString = date.getFullYear() + '-' + 
+      String(date.getMonth() + 1).padStart(2, '0') + '-' + 
+      String(date.getDate()).padStart(2, '0');
+    
+    return items.filter(item => {
+      if (!item.dueDate) return false;
+      const itemDateString = item.dueDate.getFullYear() + '-' + 
+        String(item.dueDate.getMonth() + 1).padStart(2, '0') + '-' + 
+        String(item.dueDate.getDate()).padStart(2, '0');
+      return itemDateString === targetDateString;
+    });
   };
 
   // 月移動
@@ -186,7 +194,7 @@ export default function CalendarView() {
                                     className={`px-2 py-1 rounded text-xs font-medium truncate border-l-2 ${getEventColorStyles(event.color)}`}
                                   >
                                     <div className="truncate">
-                                      {event.isAllDay ? '終日' : event.dueTime ? `${event.dueTime} ` : ''}
+                                      {!event.isAllDay && event.dueTime ? `${event.dueTime} ` : ''}
                                       {event.title}
                                     </div>
                                   </div>
@@ -278,21 +286,12 @@ export default function CalendarView() {
                                   )}
                                   
                                   <div className="flex flex-col space-y-1 mt-2 text-xs text-gray-600">
-                                    {event.isAllDay ? (
+                                    {event.dueTime && !event.isAllDay && (
                                       <span className="flex items-center">
                                         <Clock className="h-3 w-3 mr-1" />
-                                        終日
+                                        {event.dueTime}
+                                        {event.endTime && ` - ${event.endTime}`}
                                       </span>
-                                    ) : (
-                                      <>
-                                        {event.dueTime && (
-                                          <span className="flex items-center">
-                                            <Clock className="h-3 w-3 mr-1" />
-                                            {event.dueTime}
-                                            {event.endTime && ` - ${event.endTime}`}
-                                          </span>
-                                        )}
-                                      </>
                                     )}
                                     
                                     {event.location && (
