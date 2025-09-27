@@ -150,8 +150,8 @@ export default function CalendarView() {
               const events = dayItems.filter(item => item.type === 'event');
               const tasks = dayItems.filter(item => item.type === 'task');
               const isCurrentMonth = isSameMonth(day, currentMonth);
-                
-                return (
+              
+              return (
                 <div
                               key={day.toISOString()}
                               className={`border-r border-b border-gray-200 last:border-r-0 p-2 cursor-pointer hover:bg-gray-50 transition-colors flex flex-col relative ${

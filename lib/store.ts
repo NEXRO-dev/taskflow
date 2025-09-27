@@ -633,7 +633,7 @@ export const useTaskStore = create<TaskStore>()(
           set({ isLoading: true });
           
           const newTask = {
-            ...taskData,
+          ...taskData,
             userId: currentUserId,
             xpValue: taskData.priority === 'high' ? 30 : taskData.priority === 'medium' ? 20 : 10,
              type: 'task' as const,
@@ -956,7 +956,7 @@ export const useTaskStore = create<TaskStore>()(
           completions: [],
           createdAt: new Date(),
         };
-
+        
         set((state) => ({
           habits: [...state.habits, newHabit]
         }));
@@ -1018,8 +1018,8 @@ export const useTaskStore = create<TaskStore>()(
                 break;
               }
             }
-
-            return {
+          
+          return {
               ...habit,
               completions: updatedCompletions,
               streak,

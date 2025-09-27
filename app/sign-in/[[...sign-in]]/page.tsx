@@ -18,11 +18,21 @@ export default function SignInPage() {
               socialButtonsBlockButton: 'border-gray-200 hover:bg-gray-50',
               formFieldInput: 'border-gray-200 focus:border-primary focus:ring-primary',
               footerActionLink: 'text-primary hover:text-primary/80',
-              footerAction: 'hidden', // アカウント作成リンクを隠す
-              footerActionText: 'hidden', // "アカウントをお持ちでない方"テキストを隠す
+              captcha: 'display: none !important',
+              captchaContainer: 'display: none !important',
+              captchaWidget: 'display: none !important',
+              captchaWidgetContainer: 'display: none !important'
             },
           }}
-          signUpUrl={undefined} // サインアップを無効化
+          signUpUrl="/sign-up"
+          afterSignInUrl="/dashboard"
+          afterSignUpUrl="/dashboard"
+          redirectUrl="/dashboard"
+          signUpFallbackRedirectUrl="/dashboard"
+          signInFallbackRedirectUrl="/dashboard"
+          unsafeMetadata={{
+            skipCaptcha: true
+          }}
         />
       </div>
     </div>

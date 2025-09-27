@@ -146,11 +146,11 @@ export default function AddTaskForm() {
         reminder
       });
 
-      addTask({
-        title,
-        description,
-        completed: false,
-        priority,
+    addTask({
+      title,
+      description,
+      completed: false,
+      priority,
         dueDate: dueDate ? createJSTDateFromString(dueDate) : undefined,
         dueTime: dueTime || undefined,
         reminder: reminder || undefined,
@@ -285,13 +285,13 @@ export default function AddTaskForm() {
       )}
 
       {/* Modal Overlay */}
-      {isOpen && (
-        <>
+        {isOpen && (
+          <>
           <div
-            className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
-            onClick={() => setIsOpen(false)}
-          />
-          
+              className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50"
+              onClick={() => setIsOpen(false)}
+            />
+            
           <div
             className="fixed inset-x-4 top-20 bottom-4 md:inset-x-8 md:top-24 md:bottom-8 lg:inset-auto lg:top-auto lg:bottom-24 lg:right-8 lg:left-auto lg:w-96 bg-white rounded-xl border border-gray-200 shadow-xl p-4 md:p-6 z-50 max-w-md lg:max-w-none w-full max-h-[calc(100vh-6rem)] md:max-h-[calc(100vh-8rem)] lg:max-h-[calc(100vh-12rem)] overflow-y-auto"
           >
@@ -365,12 +365,12 @@ export default function AddTaskForm() {
                         <h3 className="text-lg font-semibold text-gray-900 mb-4">
                           {itemType === 'task' ? 'タスクの内容は？' : '予定の内容は？'}
                         </h3>
-                        <div className="space-y-2">
-                          <div className="relative">
-                            <input
-                              type="text"
-                              value={title}
-                              onChange={(e) => setTitle(e.target.value)}
+                <div className="space-y-2">
+                  <div className="relative">
+                    <input
+                      type="text"
+                      value={title}
+                      onChange={(e) => setTitle(e.target.value)}
                               onKeyDown={(e) => {
                                 if (e.key === 'Enter' && title.trim()) {
                                   e.preventDefault();
@@ -379,23 +379,23 @@ export default function AddTaskForm() {
                               }}
                               placeholder="例：プレゼン資料を作成する"
                               className="w-full px-4 py-3 pr-12 text-base rounded-lg border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none transition-all"
-                              required
-                            />
-                            <button
-                              type="button"
-                              onClick={startVoiceInput}
-                              className={`absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-lg transition-colors ${
-                                isListening 
-                                  ? 'text-red-500 bg-red-50 animate-pulse' 
+                      required
+                    />
+                    <button
+                      type="button"
+                      onClick={startVoiceInput}
+                      className={`absolute right-3 top-1/2 -translate-y-1/2 p-2 rounded-lg transition-colors ${
+                        isListening 
+                          ? 'text-red-500 bg-red-50 animate-pulse' 
                                   : 'text-gray-400 hover:text-gray-900 hover:bg-gray-100'
-                              }`}
-                            >
-                              {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
-                            </button>
-                          </div>
-                          {isListening && (
+                      }`}
+                    >
+                      {isListening ? <MicOff className="h-4 w-4" /> : <Mic className="h-4 w-4" />}
+                    </button>
+                  </div>
+                  {isListening && (
                             <p className="text-xs text-red-500 flex items-center space-x-1">
-                              <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
+                      <div className="w-2 h-2 bg-red-500 rounded-full animate-pulse" />
                               <span>音声認識中...</span>
                             </p>
                           )}
@@ -409,9 +409,9 @@ export default function AddTaskForm() {
                     
                       <div>
                         <h3 className="text-lg font-semibold text-gray-900 mb-4">詳細（任意）</h3>
-                        <textarea
-                          value={description}
-                          onChange={(e) => setDescription(e.target.value)}
+                  <textarea
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
                           onKeyDown={(e) => {
                             if (e.key === 'Enter' && e.ctrlKey) {
                               e.preventDefault();
@@ -538,8 +538,8 @@ export default function AddTaskForm() {
                                     </button>
                                   );
                                 })}
-                              </div>
-                              
+                </div>
+
                               {/* 日付入力 */}
                               <DatePickerCustom
                                 value={dueDate}
@@ -551,7 +551,7 @@ export default function AddTaskForm() {
 
                           {/* 開始時間 */}
                           {dueDate && !isAllDay && (
-                            <div className="space-y-2">
+                  <div className="space-y-2">
                               <div className="flex items-center justify-between">
                                 <label className="text-sm font-medium text-gray-700">
                                   {itemType === 'task' ? '時間（任意）' : '開始時間'}
@@ -711,7 +711,7 @@ export default function AddTaskForm() {
                           {dueDate && (
                             <div>
                               <label className="text-sm font-medium text-gray-700 mb-2 block">リマインダー</label>
-                              <select
+                    <select
                                 value={reminder || ''}
                                 onChange={(e) => setReminder(e.target.value ? parseInt(e.target.value) : undefined)}
                                 className="w-full px-4 py-3 text-base rounded-lg border border-gray-300 focus:border-gray-900 focus:ring-1 focus:ring-gray-900 outline-none transition-all"
@@ -723,7 +723,7 @@ export default function AddTaskForm() {
                                 <option value="60">1時間前</option>
                                 <option value="120">2時間前</option>
                                 <option value="1440">1日前</option>
-                              </select>
+                    </select>
                             </div>
                           )}
                         </div>
@@ -749,7 +749,7 @@ export default function AddTaskForm() {
                       </button>
                     )}
                   </div>
-                  
+
                   <div className="flex space-x-3">
                     {step < 3 ? (
                       <button
@@ -779,8 +779,8 @@ export default function AddTaskForm() {
                 </div>
               </form>
           </div>
-        </>
-      )}
+          </>
+        )}
     </>
   );
 }
